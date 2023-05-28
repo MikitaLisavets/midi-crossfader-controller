@@ -1,27 +1,62 @@
 #include <Arduino.h>
 #include "MIDIUSB.h" // Source: https://github.com/arduino-libraries/MIDIUSB
 
-int potPin = A0;
+const byte FADER_PIN = A0;
 
-int APin = 10;
-int BPin = 9;
+const byte POT_PIN = A1;
 
-int CC1Pin = 7;
-int CC2Pin = 8;
+const byte A_PIN = 9;
+const byte B_PIN = 8;
 
-int numberOfCC = 2;
+const byte NUMBER_OF_TRACKS = 4;
+const byte TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
 
-int channel = 0;
+const byte NUMBER_OF_PAGES = 4;
+const byte PAGE_PINS[NUMBER_OF_PAGES] = {10, 14, 15, 16};
 
-int index = 0;
+byte midiChannel = 0;
+byte pageIndex = 0;
 
-int cc[] = {0, 1};
-int potVal = 0;
-int prevVal[] = {0, 0};
-int midiVal[] = {0, 0};
+byte faderValue = 0;
+byte potValue = 0;
 
-int minVal[] = {0, 0};
-int maxVal[] = {127, 127};
+byte midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0}
+};
+
+byte previousMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0}
+};
+
+byte minMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0}
+};
+
+byte maxMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  {127, 127, 127, 127},
+  {127, 127, 127, 127},
+  {127, 127, 127, 127},
+  {127, 127, 127, 127}
+};
+
+byte ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  {0, 1, 2, 3},
+  {4, 5, 6, 7},
+  {8, 9, 10, 11},
+  {12, 13, 14, 15}
+};
+
+byte previousMidiValue = 0;
+
 
 
 void control_change(byte channel, byte control, byte value) {
@@ -30,48 +65,78 @@ void control_change(byte channel, byte control, byte value) {
 }
 
 void setup() {
-  pinMode(APin, INPUT_PULLUP);
-  pinMode(BPin, INPUT_PULLUP);
-  pinMode(CC1Pin, INPUT_PULLUP);
-  pinMode(CC2Pin, INPUT_PULLUP);
-  Serial.begin(9600);
-}
+  pinMode(A_PIN, INPUT_PULLUP);
+  pinMode(B_PIN, INPUT_PULLUP);
 
-void sub_func(int potVal, int ind) {
-  index = ind;
-
-  if (digitalRead(APin) == LOW) {
-    minVal[index] = map(potVal, 0, 1023, 0, 127);
-  }
-  if (digitalRead(BPin) == LOW) {
-    maxVal[index] = map(potVal, 0, 1023, 0, 127);
+  for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
+    pinMode(TRACK_PINS[i], INPUT_PULLUP);
   }
 
-  control_change(channel, cc[index], prevVal[index]);
-  MidiUSB.flush();
+  for (int i = 0; i < NUMBER_OF_PAGES; i++) {
+    pinMode(PAGE_PINS[i], INPUT_PULLUP);
+  }
+
+  // Serial.begin(9600);
 }
 
 void loop() {
-  potVal = analogRead(potPin);
+  for (int pIndex = 0; pIndex < NUMBER_OF_PAGES; pIndex++) {
+    if (digitalRead(PAGE_PINS[pIndex]) == LOW ) {
+      /*
+        PAGE button pressed:
+          change page index
+      */
 
-  if (digitalRead(CC1Pin) == LOW) {
-    sub_func(potVal, 0);
-  } else if (digitalRead(CC2Pin) == LOW) {
-    sub_func(potVal, 1);
-  } else {
-    for (int i = 0; i < numberOfCC; i++) {
-      if (maxVal[i] < minVal[i]) {
-        midiVal[i] = map(potVal, 1023, 0, maxVal[i], minVal[i]);
-      } else {
-        midiVal[i] = map(potVal, 0, 1023, minVal[i], maxVal[i]);
-      }
-
-      if (prevVal[i] != midiVal[i]) {
-        control_change(channel, cc[i], midiVal[i]);
-        prevVal[i] = midiVal[i];
-      }
-      MidiUSB.flush();
+      pageIndex = pIndex;
+      return;
     }
   }
+
+  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+    if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
+      if (digitalRead(A_PIN) == HIGH && digitalRead(B_PIN) == HIGH) {
+        /*
+          only TRACK button pressed:
+            - send midi event to learn with current value
+        */
+
+        control_change(midiChannel, ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
+        MidiUSB.flush();
+        return;
+      } else if (digitalRead(A_PIN) == LOW && digitalRead(B_PIN) == HIGH) {
+        /*
+          TRACK button and A button pressed:
+            listen to POT_PIN and change min midi value
+        */
+        potValue = analogRead(FADER_PIN);
+        minMidiValues[pageIndex][trackIndex] = map(potValue, 0, 1023, 0, 127);
+        return;
+      } else if (digitalRead(A_PIN) == HIGH && digitalRead(B_PIN) == LOW) {
+        /*
+          TRACK button and A button pressed:
+            listen to POT_PIN and change min midi value
+        */
+        potValue = analogRead(FADER_PIN);
+        maxMidiValues[pageIndex][trackIndex] = map(potValue, 0, 1023, 0, 127);
+        return;
+      }
+    }
+  }
+
+  faderValue = analogRead(FADER_PIN);
+
+  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+    if (maxMidiValues[pageIndex][trackIndex] < minMidiValues[pageIndex][trackIndex]) {
+      midiValues[pageIndex][trackIndex] = map(faderValue, 1023, 0, maxMidiValues[pageIndex][trackIndex], minMidiValues[pageIndex][trackIndex]);
+    } else {
+      midiValues[pageIndex][trackIndex] = map(faderValue, 0, 1023, minMidiValues[pageIndex][trackIndex], maxMidiValues[pageIndex][trackIndex]);
+    }
+
+    if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
+      control_change(midiChannel, ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
+      previousMidiValues[pageIndex][trackIndex] = midiValues[pageIndex][trackIndex];
+    }
+  }
+  MidiUSB.flush();
 }
 
