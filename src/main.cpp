@@ -88,10 +88,38 @@ void clear_dispay() {
 
 void render_main() {
   clear_dispay();
-  Serial.println("MIDI value A: " + String(midiValues[pageIndex][0]) + " with CC value: " + String(ccValues[pageIndex][0]));
-  Serial.println("MIDI value B: " + String(midiValues[pageIndex][1]) + " with CC value: " + String(ccValues[pageIndex][1]));
-  Serial.println("MIDI value C: " + String(midiValues[pageIndex][2]) + " with CC value: " + String(ccValues[pageIndex][2]));
-  Serial.println("MIDI value D: " + String(midiValues[pageIndex][3]) + " with CC value: " + String(ccValues[pageIndex][3]));
+  Serial.println("=== Page " + String(pageIndex) + " ===");
+  Serial.print("A:");
+  Serial.print("[" + String(stageLeftIndexes[pageIndex]) + "]");
+  Serial.print(String(leftMidiValues[pageIndex][0][stageLeftIndexes[pageIndex]]));
+  Serial.print(" < " + String(midiValues[pageIndex][0]) + " > ");
+  Serial.print(String(rightMidiValues[pageIndex][0][stageRightIndexes[pageIndex]]));
+  Serial.print("[" + String(stageRightIndexes[pageIndex]) + "]");
+  Serial.println();
+
+  Serial.print("B:");
+  Serial.print("[" + String(stageLeftIndexes[pageIndex]) + "]");
+  Serial.print(String(leftMidiValues[pageIndex][1][stageLeftIndexes[pageIndex]]));
+  Serial.print(" < " + String(midiValues[pageIndex][1]) + " > ");
+  Serial.print(String(rightMidiValues[pageIndex][1][stageRightIndexes[pageIndex]]));
+  Serial.print("[" + String(stageRightIndexes[pageIndex]) + "]");
+  Serial.println();
+
+  Serial.print("C:");
+  Serial.print("[" + String(stageLeftIndexes[pageIndex]) + "]");
+  Serial.print(String(leftMidiValues[pageIndex][2][stageLeftIndexes[pageIndex]]));
+  Serial.print(" < " + String(midiValues[pageIndex][2]) + " > ");
+  Serial.print(String(rightMidiValues[pageIndex][2][stageRightIndexes[pageIndex]]));
+  Serial.print("[" + String(stageRightIndexes[pageIndex]) + "]");
+  Serial.println();
+
+  Serial.print("D:");
+  Serial.print("[" + String(stageLeftIndexes[pageIndex]) + "]");
+  Serial.print(String(leftMidiValues[pageIndex][3][stageLeftIndexes[pageIndex]]));
+  Serial.print(" < " + String(midiValues[pageIndex][3]) + " > ");
+  Serial.print(String(rightMidiValues[pageIndex][3][stageRightIndexes[pageIndex]]));
+  Serial.print("[" + String(stageRightIndexes[pageIndex]) + "]");
+  Serial.println();
 }
 
 void render_page_change() {
@@ -235,5 +263,7 @@ void loop() {
   MidiUSB.flush();
 
   refresh_dispay();
+
+  delay(300);
 }
 
