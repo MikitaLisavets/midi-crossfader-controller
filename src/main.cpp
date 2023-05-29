@@ -71,6 +71,10 @@ byte ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {12, 13, 14, 15}
 };
 
+String pageTitles[] = { "I", "II", "III", "IV" };
+String stageTitles[] = { "1", "2", "3", "4" };
+String trackTitles[] = { "A", "B", "C", "D" };
+
 void control_change(byte channel, byte control, byte value) {
   midiEventPacket_t event = {0x0B, static_cast<uint8_t>(0xB0 | channel), control, value};
   MidiUSB.sendMIDI(event);
@@ -90,75 +94,26 @@ void refresh_dispay() {
 void render_main() {
   clear_dispay();
   display.setCursor(30, display.getCursorY());
-  display.println("=== Page: "+ String(pageIndex) + " ===");
+  display.println("=== Page: "+ pageTitles[pageIndex] + " ===");
 
-  // Display A Track
-  display.print(F("A | "));
-  display.print("(" + String(stageLeftIndexes[pageIndex]) + ")");
-  display.setCursor(27 - String(leftMidiValues[pageIndex][0][stageLeftIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(leftMidiValues[pageIndex][0][stageLeftIndexes[pageIndex]]));
-  display.setCursor(40, display.getCursorY());
-  display.print(F("<"));
-  display.setCursor(55 - String(midiValues[pageIndex][0]).length(), display.getCursorY());
-  display.print(String(midiValues[pageIndex][0]));
-  display.setCursor(68, display.getCursorY());
-  display.print(F(">"));
-  display.setCursor(78 - String(rightMidiValues[pageIndex][0][stageRightIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(rightMidiValues[pageIndex][0][stageRightIndexes[pageIndex]]));
-  display.setCursor(92, display.getCursorY());
-  display.print("(" + String(stageRightIndexes[pageIndex]) + ")");
-  display.println();
+  for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
+    display.print(trackTitles[i] + " | ");
+    display.print("(" + stageTitles[stageLeftIndexes[pageIndex]] + ")");
+    display.setCursor(27 - String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex]]).length(), display.getCursorY());
+    display.print(String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex]]));
+    display.setCursor(40, display.getCursorY());
+    display.print(F("<"));
+    display.setCursor(55 - String(midiValues[pageIndex][i]).length(), display.getCursorY());
+    display.print(String(midiValues[pageIndex][i]));
+    display.setCursor(68, display.getCursorY());
+    display.print(F(">"));
+    display.setCursor(78 - String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex]]).length(), display.getCursorY());
+    display.print(String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex]]));
+    display.setCursor(92, display.getCursorY());
+    display.print("(" + stageTitles[stageRightIndexes[pageIndex]] + ")");
+    display.println();
+  }
 
-  // Display B Track
-  display.print(F("B | "));
-  display.print("(" + String(stageLeftIndexes[pageIndex]) + ")");
-  display.setCursor(27 - String(leftMidiValues[pageIndex][1][stageLeftIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(leftMidiValues[pageIndex][1][stageLeftIndexes[pageIndex]]));
-  display.setCursor(40, display.getCursorY());
-  display.print(F("<"));
-  display.setCursor(55 - String(midiValues[pageIndex][1]).length(), display.getCursorY());
-  display.print(String(midiValues[pageIndex][1]));
-  display.setCursor(68, display.getCursorY());
-  display.print(F(">"));
-  display.setCursor(78 - String(rightMidiValues[pageIndex][1][stageRightIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(rightMidiValues[pageIndex][1][stageRightIndexes[pageIndex]]));
-  display.setCursor(92, display.getCursorY());
-  display.print("(" + String(stageRightIndexes[pageIndex]) + ")");
-  display.println();
-
-  // Display C Track
-  display.print(F("C | "));
-  display.print("(" + String(stageLeftIndexes[pageIndex]) + ")");
-  display.setCursor(27 - String(leftMidiValues[pageIndex][2][stageLeftIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(leftMidiValues[pageIndex][2][stageLeftIndexes[pageIndex]]));
-  display.setCursor(40, display.getCursorY());
-  display.print(F("<"));
-  display.setCursor(55 - String(midiValues[pageIndex][2]).length(), display.getCursorY());
-  display.print(String(midiValues[pageIndex][2]));
-  display.setCursor(68, display.getCursorY());
-  display.print(F(">"));
-  display.setCursor(78 - String(rightMidiValues[pageIndex][2][stageRightIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(rightMidiValues[pageIndex][2][stageRightIndexes[pageIndex]]));
-  display.setCursor(92, display.getCursorY());
-  display.print("(" + String(stageRightIndexes[pageIndex]) + ")");
-  display.println();
-
-  // Display D Track
-  display.print(F("D | "));
-  display.print("(" + String(stageLeftIndexes[pageIndex]) + ")");
-  display.setCursor(27 - String(leftMidiValues[pageIndex][3][stageLeftIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(leftMidiValues[pageIndex][3][stageLeftIndexes[pageIndex]]));
-  display.setCursor(40, display.getCursorY());
-  display.print(F("<"));
-  display.setCursor(55 - String(midiValues[pageIndex][3]).length(), display.getCursorY());
-  display.print(String(midiValues[pageIndex][3]));
-  display.setCursor(68, display.getCursorY());
-  display.print(F(">"));
-  display.setCursor(78 - String(rightMidiValues[pageIndex][3][stageRightIndexes[pageIndex]]).length(), display.getCursorY());
-  display.print(String(rightMidiValues[pageIndex][3][stageRightIndexes[pageIndex]]));
-  display.setCursor(92, display.getCursorY());
-  display.print("(" + String(stageRightIndexes[pageIndex]) + ")");
-  display.println();
   refresh_dispay();
 }
 
@@ -166,7 +121,7 @@ void render_page_change() {
   clear_dispay();
   display.setCursor(20, 15);
   display.setTextSize(3);
-  display.println("Page: " + String(pageIndex));
+  display.println("Page: " + pageTitles[pageIndex]);
   refresh_dispay();
 }
 
@@ -175,7 +130,8 @@ void render_left_stage_change() {
   display.setCursor(0, 15);
   display.setTextSize(3);
   display.println("Stage Left:");
-  display.println(String(stageLeftIndexes[pageIndex]));
+  display.setCursor(54, display.getCursorY());
+  display.println(stageTitles[stageLeftIndexes[pageIndex]]);
   refresh_dispay();
 }
 
@@ -184,15 +140,17 @@ void render_right_stage_change() {
   display.setCursor(0, 15);
   display.setTextSize(3);
   display.println("Stage Right:");
-  display.println(String(stageRightIndexes[pageIndex]));
+  display.setCursor(54, display.getCursorY());
+  display.println(stageTitles[stageRightIndexes[pageIndex]]);
   refresh_dispay();
 }
 
 void render_midi_learn_signal(byte trackIndex) {
   clear_dispay();
-  display.println("Send MIDI signal");
-  display.println("Track: " + String(trackIndex));
-  display.println("Page:  " + String(pageIndex));
+  display.setCursor(0, 10);
+  display.setTextSize(2);
+  display.println("Sending MIDI ...");
+  display.println("Track: " + trackTitles[trackIndex] + " | " + "Page:  " + pageTitles[pageIndex]);
 
   refresh_dispay();
 }
@@ -203,6 +161,7 @@ void render_left_midi_value_change(byte trackIndex) {
   display.setTextSize(3);
 
   display.println("Left value:");
+  display.setCursor(50, display.getCursorY());
   display.println(String(leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex]]));
   refresh_dispay();
 }
@@ -213,6 +172,7 @@ void render_right_midi_value_change(byte trackIndex) {
   display.setTextSize(3);
 
   display.println("Right value:");
+  display.setCursor(50, display.getCursorY());
   display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex]]));
   refresh_dispay();
 }
