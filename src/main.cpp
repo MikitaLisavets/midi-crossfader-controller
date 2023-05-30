@@ -368,7 +368,7 @@ void loop() {
         byte temp = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]];
         leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]];
         rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = temp;
-
+        delay(150);
       }
     }
   }
@@ -385,11 +385,10 @@ void loop() {
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
       control_change(midiChannel, ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
       previousMidiValues[pageIndex][trackIndex] = midiValues[pageIndex][trackIndex];
+      MidiUSB.flush();
     }
   }
 
   render_main();
-
-  MidiUSB.flush();
 }
 
