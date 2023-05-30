@@ -30,8 +30,19 @@ const byte NUMBER_OF_STAGES = 4;
 byte midiChannel = 0;
 byte pageIndex = 0;
 
-byte stageLeftIndexes[NUMBER_OF_STAGES] = {0, 0, 0, 0};
-byte stageRightIndexes[NUMBER_OF_STAGES] = {0, 0, 0, 0};
+byte stageLeftIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0}
+};
+
+byte stageRightIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0},
+  {0, 0, 0, 0}
+};
 
 int faderValue = 0;
 int potValue = 0;
@@ -98,19 +109,19 @@ void render_main() {
 
   for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
     display.print(trackTitles[i] + " | ");
-    display.print("(" + stageTitles[stageLeftIndexes[pageIndex]] + ")");
-    display.setCursor(27 - String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex]]).length(), display.getCursorY());
-    display.print(String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex]]));
+    display.print("(" + stageTitles[stageLeftIndexes[pageIndex][i]] + ")");
+    display.setCursor(27 - String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex][i]]).length(), display.getCursorY());
+    display.print(String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex][i]]));
     display.setCursor(40, display.getCursorY());
     display.print(F("<"));
     display.setCursor(55 - String(midiValues[pageIndex][i]).length(), display.getCursorY());
     display.print(String(midiValues[pageIndex][i]));
     display.setCursor(68, display.getCursorY());
     display.print(F(">"));
-    display.setCursor(78 - String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex]]).length(), display.getCursorY());
-    display.print(String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex]]));
+    display.setCursor(78 - String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex][i]]).length(), display.getCursorY());
+    display.print(String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex][i]]));
     display.setCursor(92, display.getCursorY());
-    display.print("(" + stageTitles[stageRightIndexes[pageIndex]] + ")");
+    display.print("(" + stageTitles[stageRightIndexes[pageIndex][i]] + ")");
     display.println();
   }
 
@@ -125,23 +136,33 @@ void render_page_change() {
   refresh_dispay();
 }
 
-void render_left_stage_change() {
+void render_left_stage_change(int trackIndex) {
   clear_dispay();
-  display.setCursor(0, 15);
-  display.setTextSize(3);
-  display.println("Stage Left:");
-  display.setCursor(54, display.getCursorY());
-  display.println(stageTitles[stageLeftIndexes[pageIndex]]);
+  display.setCursor(0, 10);
+  display.setTextSize(2);
+  if (trackIndex >= 0) {
+    display.println("Stage Left: " + String(stageTitles[stageLeftIndexes[pageIndex][trackIndex]]));
+    display.println("Track: " + trackTitles[trackIndex]);
+  } else {
+    display.println("Stage Left: " + String(stageTitles[stageLeftIndexes[pageIndex][0]]));
+    display.println("All tracks");
+  }
+
   refresh_dispay();
 }
 
-void render_right_stage_change() {
+void render_right_stage_change(int trackIndex) {
   clear_dispay();
-  display.setCursor(0, 15);
-  display.setTextSize(3);
-  display.println("Stage Right:");
-  display.setCursor(54, display.getCursorY());
-  display.println(stageTitles[stageRightIndexes[pageIndex]]);
+  display.setCursor(0, 10);
+  display.setTextSize(2);
+  if (trackIndex >= 0) {
+    display.println("Stage Right: " + String(stageTitles[stageRightIndexes[pageIndex][trackIndex]]));
+    display.println("Track: " + trackTitles[trackIndex]);
+  } else {
+    display.println("Stage Right: " + String(stageTitles[stageRightIndexes[pageIndex][0]]));
+    display.println("All tracks");
+  }
+
   refresh_dispay();
 }
 
@@ -162,7 +183,7 @@ void render_left_midi_value_change(byte trackIndex) {
 
   display.println("Left value:");
   display.setCursor(50, display.getCursorY());
-  display.println(String(leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex]]));
+  display.println(String(leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]));
   refresh_dispay();
 }
 
@@ -173,7 +194,7 @@ void render_right_midi_value_change(byte trackIndex) {
 
   display.println("Right value:");
   display.setCursor(50, display.getCursorY());
-  display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex]]));
+  display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]));
   refresh_dispay();
 }
 
@@ -208,25 +229,49 @@ void loop() {
         render_page_change();
         return;
       } else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
+        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+          if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
+            /*
+              PAGE button and A button pressed:
+                change A stage for pressed track on current page
+            */
+              stageLeftIndexes[pageIndex][trackIndex] = i;
+              render_left_stage_change(trackIndex);
+              return;
+          }
+        }
         /*
           PAGE button and A button pressed:
-            change A stage on current page
+            change A stage for all tracks on current page
         */
-
-        stageLeftIndexes[pageIndex] = i;
-
-        render_left_stage_change();
+        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+          stageLeftIndexes[pageIndex][trackIndex] = i;
+        }
+        render_left_stage_change(-1);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        /*
-          PAGE button and B button pressed:
-            change B stage on current page
-        */
+        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+          if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
+            /*
+              PAGE button and B button pressed:
+                change B stage for pressed track on current page
+            */
+              stageRightIndexes[pageIndex][trackIndex] = i;
+              render_right_stage_change(trackIndex);
+              return;
 
-        stageRightIndexes[pageIndex] = i;
+          }
+          /*
+            PAGE button and B button pressed:
+              change B stage for all tracks on current page
+          */
 
-        render_right_stage_change();
-        return;
+          for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+            stageRightIndexes[pageIndex][trackIndex] = i;
+          }
+          render_right_stage_change(-1);
+          return;
+        }
       }
     }
   }
@@ -253,7 +298,7 @@ void loop() {
             listen to POT_PIN and change min midi value
         */
 
-        leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex]] = map(potValue, 0, 1023, 0, 127);
+        leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = map(potValue, 0, 1023, 0, 127);
 
         render_left_midi_value_change(trackIndex);
         return;
@@ -263,7 +308,7 @@ void loop() {
             listen to POT_PIN and change min midi value
         */
 
-        rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex]] = map(potValue, 0, 1023, 0, 127);
+        rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = map(potValue, 0, 1023, 0, 127);
 
         render_right_midi_value_change(trackIndex);
         return;
@@ -274,10 +319,10 @@ void loop() {
   faderValue = analogRead(FADER_PIN);
 
   for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-    if (rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex]] < leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex]]) {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 1023, 0, rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex]], leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex]]);
+    if (rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] < leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]) {
+      midiValues[pageIndex][trackIndex] = map(faderValue, 1023, 0, rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]], leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]);
     } else {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 0, 1023, leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex]], rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex]]);
+      midiValues[pageIndex][trackIndex] = map(faderValue, 0, 1023, leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]], rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]);
     }
 
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
