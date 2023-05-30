@@ -12,9 +12,11 @@ const uint8_t SCREEN_ADDRESS = 0x3C;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-const byte FADER_PIN = A0;
+const byte FADER_PIN = A1;
 
-const byte POT_PIN = A1;
+const byte POT_CLK = A2;
+const byte POT_DT = A3;
+const byte POT_SW = 1;
 
 const byte LEFT_PIN = 8;
 const byte RIGHT_PIN = 9;
@@ -23,9 +25,15 @@ const byte NUMBER_OF_TRACKS = 4;
 const byte TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
 
 const byte NUMBER_OF_PAGES = 4;
-const byte PAGE_PINS[NUMBER_OF_PAGES] = {10, 16, A2, 15};
+const byte PAGE_PINS[NUMBER_OF_PAGES] = {10, 16, A0, 15};
 
 const byte NUMBER_OF_STAGES = 4;
+
+int currentStateCLK;
+int lastStateCLK;
+
+int potStep = 1;
+int potValue;
 
 byte midiChannel = 0;
 byte pageIndex = 0;
@@ -45,7 +53,6 @@ byte stageRightIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
 };
 
 int faderValue = 0;
-int potValue = 0;
 
 byte midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {0, 0, 0, 0},
@@ -199,6 +206,11 @@ void render_right_midi_value_change(byte trackIndex) {
 }
 
 void setup() {
+  pinMode(POT_CLK,INPUT);
+  pinMode(POT_DT,INPUT);
+
+  pinMode(POT_SW, INPUT_PULLUP);
+
   pinMode(LEFT_PIN, INPUT_PULLUP);
   pinMode(RIGHT_PIN, INPUT_PULLUP);
 
@@ -213,6 +225,8 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   display.setFont(&TomThumb);
   clear_dispay();
+
+  lastStateCLK = digitalRead(POT_CLK);
 }
 
 
@@ -276,8 +290,6 @@ void loop() {
     }
   }
 
-  potValue = analogRead(FADER_PIN);
-
   for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
     if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
       if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
@@ -292,26 +304,71 @@ void loop() {
 
         render_midi_learn_signal(trackIndex);
         return;
-      } else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
+      } else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH && digitalRead(POT_SW) == HIGH) {
         /*
           TRACK button and A button pressed:
             listen to POT_PIN and change min midi value
         */
 
-        leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = map(potValue, 0, 1023, 0, 127);
+        currentStateCLK = digitalRead(POT_CLK);
+
+        if (currentStateCLK != lastStateCLK  && currentStateCLK == 1) {
+          if (digitalRead(POT_DT) != currentStateCLK) {
+            potValue = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] - potStep;
+            if (potValue < 0) {
+              potValue = 0;
+            }
+
+          } else {
+            potValue = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] + potStep;
+            if (potValue > 127) {
+              potValue = 127;
+            }
+          }
+
+          leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = potValue;
+        }
 
         render_left_midi_value_change(trackIndex);
+
+        lastStateCLK = currentStateCLK;
         return;
-      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
+      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW && digitalRead(POT_SW) == HIGH) {
         /*
           TRACK button and A button pressed:
             listen to POT_PIN and change min midi value
         */
+        currentStateCLK = digitalRead(POT_CLK);
 
-        rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = map(potValue, 0, 1023, 0, 127);
+        if (currentStateCLK != lastStateCLK  && currentStateCLK == 1) {
+          if (digitalRead(POT_DT) != currentStateCLK) {
+            potValue = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] - potStep;
+            if (potValue < 0) {
+              potValue = 0;
+            }
+
+          } else {
+            potValue = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] + potStep;
+            if (potValue > 127) {
+              potValue = 127;
+            }
+          }
+
+          rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = potValue;
+        }
 
         render_right_midi_value_change(trackIndex);
+        lastStateCLK = currentStateCLK;
         return;
+      }  else if ((digitalRead(LEFT_PIN) == LOW || digitalRead(RIGHT_PIN) == LOW) && digitalRead(POT_SW) == LOW) {
+        /*
+          TRACK button and A or B button pressed and Pot SW pressed:
+            swap min and max midi values
+        */
+        byte temp = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]];
+        leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]];
+        rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = temp;
+
       }
     }
   }
