@@ -51,6 +51,7 @@ byte stageRightIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
 };
 
 int faderValue = 0;
+byte faderThreshold = 10;
 
 byte midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {0, 0, 0, 0},
@@ -389,12 +390,17 @@ void loop() {
   }
 
   faderValue = analogRead(FADER_PIN);
+  if (faderValue > 1023 - faderThreshold) {
+    faderValue = 1023 - faderThreshold;
+  } else if (faderValue < 0 + faderThreshold) {
+    faderValue = 0 + faderThreshold;
+  }
 
   for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
     if (rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] < leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]) {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 1023, 0, rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]], leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]);
+      midiValues[pageIndex][trackIndex] = map(faderValue, 1023 - faderThreshold, 0 + faderThreshold, rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]], leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]);
     } else {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 0, 1023, leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]], rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]);
+      midiValues[pageIndex][trackIndex] = map(faderValue, 0 + faderThreshold, 1023 - faderThreshold, leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]], rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]);
     }
 
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
