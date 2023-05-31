@@ -118,6 +118,16 @@ void refresh_dispay() {
   display.display();
 }
 
+void render_init() {
+  clear_dispay();
+
+  display.setTextSize(2);
+  display.setCursor(25, 10);
+  display.println("X-Fader");
+
+  refresh_dispay();
+}
+
 void render_main() {
   clear_dispay();
 
@@ -209,10 +219,12 @@ void setup() {
     pinMode(PAGE_PINS[i], INPUT_PULLUP);
   }
 
-  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-  clear_dispay();
-
   lastStateCLK = digitalRead(POT_CLK);
+
+  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+  render_init();
+  delay(1000);
+  clear_dispay();
 }
 
 
