@@ -3,8 +3,6 @@
 #include <MIDIUSB.h> // Source: https://github.com/arduino-libraries/MIDIUSB
 #include <Adafruit_GFX.h> // Source: https://github.com/adafruit/Adafruit-GFX-Library
 #include <Adafruit_SSD1306.h> // Source: https://github.com/adafruit/Adafruit_SSD1306
-#include <Fonts/TomThumb.h>
-#include <Fonts/Picopixel.h>
 
 const uint8_t SCREEN_WIDTH = 128;
 const uint8_t SCREEN_HEIGHT = 32;
@@ -12,20 +10,20 @@ const uint8_t SCREEN_ADDRESS = 0x3C;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-const byte FADER_PIN = A1;
+const byte FADER_PIN = A0;
 
-const byte POT_CLK = A2;
-const byte POT_DT = A3;
-const byte POT_SW = 1;
+const byte POT_CLK = A1;
+const byte POT_DT = A2;
+const byte POT_SW = 15;
 
-const byte LEFT_PIN = 8;
-const byte RIGHT_PIN = 9;
+const byte LEFT_PIN = 10;
+const byte RIGHT_PIN = 16;
 
 const byte NUMBER_OF_TRACKS = 4;
-const byte TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
+const byte TRACK_PINS[NUMBER_OF_TRACKS] = {1, 0, 4, 5};
 
 const byte NUMBER_OF_PAGES = 4;
-const byte PAGE_PINS[NUMBER_OF_PAGES] = {10, 16, A0, 15};
+const byte PAGE_PINS[NUMBER_OF_PAGES] = {6, 7, 8, 9};
 
 const byte NUMBER_OF_STAGES = 4;
 
@@ -89,9 +87,20 @@ byte ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {12, 13, 14, 15}
 };
 
-String pageTitles[] = { "I", "II", "III", "IV" };
+String pageTitles[] = { "1", "2", "3", "4" };
 String stageTitles[] = { "1", "2", "3", "4" };
 String trackTitles[] = { "A", "B", "C", "D" };
+
+String fill_with_spaces(byte number) {
+  switch(String(number).length()) {
+    case 1:
+      return String(number) + "  ";
+    case 2:
+      return String(number) + " ";
+    default:
+      return String(number);
+  }
+}
 
 void control_change(byte channel, byte control, byte value) {
   midiEventPacket_t event = {0x0B, static_cast<uint8_t>(0xB0 | channel), control, value};
@@ -102,7 +111,7 @@ void clear_dispay() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(0, 5);
+  display.setCursor(0, 0);
 }
 
 void refresh_dispay() {
@@ -111,24 +120,9 @@ void refresh_dispay() {
 
 void render_main() {
   clear_dispay();
-  display.setCursor(30, display.getCursorY());
-  display.println("=== Page: "+ pageTitles[pageIndex] + " ===");
 
   for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
-    display.print(trackTitles[i] + " | ");
-    display.print("(" + stageTitles[stageLeftIndexes[pageIndex][i]] + ")");
-    display.setCursor(27 - String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex][i]]).length(), display.getCursorY());
-    display.print(String(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex][i]]));
-    display.setCursor(40, display.getCursorY());
-    display.print(F("<"));
-    display.setCursor(55 - String(midiValues[pageIndex][i]).length(), display.getCursorY());
-    display.print(String(midiValues[pageIndex][i]));
-    display.setCursor(68, display.getCursorY());
-    display.print(F(">"));
-    display.setCursor(78 - String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex][i]]).length(), display.getCursorY());
-    display.print(String(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex][i]]));
-    display.setCursor(92, display.getCursorY());
-    display.print("(" + stageTitles[stageRightIndexes[pageIndex][i]] + ")");
+    display.print(trackTitles[i] + pageTitles[pageIndex] + + "|" + stageTitles[stageLeftIndexes[pageIndex][i]] + "| " + fill_with_spaces(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex][i]]) + "<" + fill_with_spaces(midiValues[pageIndex][i]) + ">" + fill_with_spaces(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex][i]]) + " |" + stageTitles[stageRightIndexes[pageIndex][i]] + "|");
     display.println();
   }
 
@@ -137,21 +131,19 @@ void render_main() {
 
 void render_page_change() {
   clear_dispay();
-  display.setCursor(20, 15);
   display.setTextSize(3);
-  display.println("Page: " + pageTitles[pageIndex]);
+  display.println("Page:" + pageTitles[pageIndex]);
   refresh_dispay();
 }
 
 void render_left_stage_change(int trackIndex) {
   clear_dispay();
-  display.setCursor(0, 10);
   display.setTextSize(2);
   if (trackIndex >= 0) {
-    display.println("Stage Left: " + String(stageTitles[stageLeftIndexes[pageIndex][trackIndex]]));
+    display.println("L stage: " + String(stageTitles[stageLeftIndexes[pageIndex][trackIndex]]));
     display.println("Track: " + trackTitles[trackIndex]);
   } else {
-    display.println("Stage Left: " + String(stageTitles[stageLeftIndexes[pageIndex][0]]));
+    display.println("L stage: " + String(stageTitles[stageLeftIndexes[pageIndex][0]]));
     display.println("All tracks");
   }
 
@@ -160,13 +152,12 @@ void render_left_stage_change(int trackIndex) {
 
 void render_right_stage_change(int trackIndex) {
   clear_dispay();
-  display.setCursor(0, 10);
   display.setTextSize(2);
   if (trackIndex >= 0) {
-    display.println("Stage Right: " + String(stageTitles[stageRightIndexes[pageIndex][trackIndex]]));
+    display.println("R stage: " + String(stageTitles[stageRightIndexes[pageIndex][trackIndex]]));
     display.println("Track: " + trackTitles[trackIndex]);
   } else {
-    display.println("Stage Right: " + String(stageTitles[stageRightIndexes[pageIndex][0]]));
+    display.println("R stage: " + String(stageTitles[stageRightIndexes[pageIndex][0]]));
     display.println("All tracks");
   }
 
@@ -175,32 +166,28 @@ void render_right_stage_change(int trackIndex) {
 
 void render_midi_learn_signal(byte trackIndex) {
   clear_dispay();
-  display.setCursor(0, 10);
-  display.setTextSize(2);
+  display.setTextSize(1);
   display.println("Sending MIDI ...");
-  display.println("Track: " + trackTitles[trackIndex] + " | " + "Page:  " + pageTitles[pageIndex]);
+  display.println("Page:  " + pageTitles[pageIndex]);
+  display.println("Track: " + trackTitles[trackIndex]);
 
   refresh_dispay();
 }
 
 void render_left_midi_value_change(byte trackIndex) {
   clear_dispay();
-  display.setCursor(0, 15);
-  display.setTextSize(3);
+  display.setTextSize(2);
 
-  display.println("Left value:");
-  display.setCursor(50, display.getCursorY());
+  display.println("L value:");
   display.println(String(leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]));
   refresh_dispay();
 }
 
 void render_right_midi_value_change(byte trackIndex) {
   clear_dispay();
-  display.setCursor(0, 15);
-  display.setTextSize(3);
+  display.setTextSize(2);
 
-  display.println("Right value:");
-  display.setCursor(50, display.getCursorY());
+  display.println("R value:");
   display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]));
   refresh_dispay();
 }
@@ -223,7 +210,6 @@ void setup() {
   }
 
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-  display.setFont(&TomThumb);
   clear_dispay();
 
   lastStateCLK = digitalRead(POT_CLK);
@@ -275,17 +261,17 @@ void loop() {
               return;
 
           }
-          /*
-            PAGE button and B button pressed:
-              change B stage for all tracks on current page
-          */
-
-          for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-            stageRightIndexes[pageIndex][trackIndex] = i;
-          }
-          render_right_stage_change(-1);
-          return;
         }
+        /*
+          PAGE button and B button pressed:
+            change B stage for all tracks on current page
+        */
+
+        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+          stageRightIndexes[pageIndex][trackIndex] = i;
+        }
+        render_right_stage_change(-1);
+        return;
       }
     }
   }
