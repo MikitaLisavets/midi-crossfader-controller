@@ -91,12 +91,12 @@ String pageTitles[] = { "1", "2", "3", "4" };
 String stageTitles[] = { "1", "2", "3", "4" };
 String trackTitles[] = { "A", "B", "C", "D" };
 
-String fill_with_spaces(byte number) {
+String fill_with(byte number) {
   switch(String(number).length()) {
     case 1:
-      return String(number) + "  ";
+      return String(number) + "..";
     case 2:
-      return String(number) + " ";
+      return String(number) + ".";
     default:
       return String(number);
   }
@@ -123,8 +123,26 @@ void render_init() {
 
   display.setTextSize(2);
   display.setCursor(25, 10);
-  display.println("X-Fader");
-
+  display.print("X");
+  refresh_dispay();
+  delay(60);
+  display.print("-");
+  refresh_dispay();
+  delay(60);
+  display.print("F");
+  refresh_dispay();
+  delay(60);
+  display.print("a");
+  refresh_dispay();
+  delay(60);
+  display.print("d");
+  refresh_dispay();
+  delay(60);
+  display.print("e");
+  refresh_dispay();
+  delay(60);
+  display.print("r");
+  delay(300);
   refresh_dispay();
 }
 
@@ -132,7 +150,7 @@ void render_main() {
   clear_dispay();
 
   for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
-    display.print(trackTitles[i] + pageTitles[pageIndex] + + "|" + stageTitles[stageLeftIndexes[pageIndex][i]] + "| " + fill_with_spaces(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex][i]]) + "<" + fill_with_spaces(midiValues[pageIndex][i]) + ">" + fill_with_spaces(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex][i]]) + " |" + stageTitles[stageRightIndexes[pageIndex][i]] + "|");
+    display.print(trackTitles[i] + pageTitles[pageIndex] + + "|" + stageTitles[stageLeftIndexes[pageIndex][i]] + "| " + fill_with(leftMidiValues[pageIndex][i][stageLeftIndexes[pageIndex][i]]) + "<" + fill_with(midiValues[pageIndex][i]) + ">" + fill_with(rightMidiValues[pageIndex][i][stageRightIndexes[pageIndex][i]]) + " |" + stageTitles[stageRightIndexes[pageIndex][i]] + "|");
     display.println();
   }
 
@@ -223,7 +241,6 @@ void setup() {
 
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   render_init();
-  delay(1000);
   clear_dispay();
 }
 
