@@ -164,7 +164,7 @@ void render_main() {
   refresh_dispay();
 }
 
-void render_page_change() {
+void render_page_press() {
   clear_dispay();
   display.setTextSize(3);
   display.println("Page:" + pageTitles[pageIndex]);
@@ -244,14 +244,14 @@ void render_midi_values_swap(byte trackIndex) {
 
 // === Handlers ===
 
-void handle_page_change(byte newPageIndex) {
+void handle_page_press(byte newPageIndex) {
   /*
     only PAGE button pressed:
       - change page index
   */
 
   pageIndex = newPageIndex;
-  render_page_change();
+  render_page_press();
 }
 
 void handle_left_stage_change(byte newStageIndex) {
@@ -425,7 +425,7 @@ void loop() {
         render_right_stage_change(pIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_page_change(pIndex);
+        handle_page_press(pIndex);
         return;
       } 
     }
@@ -433,19 +433,19 @@ void loop() {
 
   for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
     if (digitalRead(TRACK_PINS[tIndex]) == LOW ) {
-      if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_track_press(tIndex);
-        return;
-      } else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH && digitalRead(POT_SW) == HIGH) {
+      if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
         handle_left_midi_value_change(tIndex);
         return;
-      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW && digitalRead(POT_SW) == HIGH) {
+      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
         handle_right_midi_value_change(tIndex);
         return;
       }  else if ((digitalRead(LEFT_PIN) == LOW || digitalRead(RIGHT_PIN) == LOW) && digitalRead(POT_SW) == LOW) {
         handle_midi_values_swap(tIndex);
         return;
-      }
+      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
+        handle_track_press(tIndex);
+        return;
+      } 
     }
   }
 
