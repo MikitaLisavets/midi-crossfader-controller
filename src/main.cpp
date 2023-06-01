@@ -419,10 +419,10 @@ void loop() {
   for (byte pIndex = 0; pIndex < NUMBER_OF_PAGES; pIndex++) {
     if (digitalRead(PAGE_PINS[pIndex]) == LOW) {
       if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
-        render_left_stage_change(pIndex);
+        handle_left_stage_change(pIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        render_right_stage_change(pIndex);
+        handle_right_stage_change(pIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
         handle_page_press(pIndex);
