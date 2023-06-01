@@ -143,8 +143,8 @@ void render_init() {
   refresh_dispay();
   delay(60);
   display.print("r");
-  delay(300);
   refresh_dispay();
+  delay(300);
 }
 
 void render_main() {
@@ -222,6 +222,10 @@ void render_right_midi_value_change(byte trackIndex) {
 }
 
 void setup() {
+  // Turn off system leds
+  pinMode(LED_BUILTIN_TX, INPUT);
+  pinMode(LED_BUILTIN_RX, INPUT);
+
   pinMode(POT_CLK,INPUT);
   pinMode(POT_DT,INPUT);
 
