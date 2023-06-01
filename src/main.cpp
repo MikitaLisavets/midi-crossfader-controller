@@ -103,10 +103,16 @@ String fill_with(byte number) {
   }
 }
 
+// === MIDI ===
+
 void control_change(byte channel, byte control, byte value) {
   midiEventPacket_t event = {0x0B, static_cast<uint8_t>(0xB0 | channel), control, value};
   MidiUSB.sendMIDI(event);
 }
+
+// ============
+
+// === Display ===
 
 void clear_dispay() {
   display.clearDisplay();
@@ -193,7 +199,7 @@ void render_right_stage_change(int trackIndex) {
   refresh_dispay();
 }
 
-void render_midi_learn_signal(byte trackIndex) {
+void render_track_press(byte trackIndex) {
   clear_dispay();
   display.setTextSize(1);
   display.println("Sending MIDI ...");
@@ -220,6 +226,165 @@ void render_right_midi_value_change(byte trackIndex) {
   display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]));
   refresh_dispay();
 }
+
+void render_midi_values_swap(byte trackIndex) {
+  clear_dispay();
+  display.setTextSize(1);
+  display.println("Swap L and R values:");
+  display.print("L value: ");
+  display.println(String(leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]));
+  display.print("R value: ");
+  display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]));
+  display.print("Track: ");
+  display.println(trackTitles[trackIndex]);
+  refresh_dispay();
+}
+
+// ===============
+
+// === Handlers ===
+
+void handle_page_change(byte newPageIndex) {
+  /*
+    only PAGE button pressed:
+      - change page index
+  */
+
+  pageIndex = newPageIndex;
+  render_page_change();
+}
+
+void handle_left_stage_change(byte newStageIndex) {
+  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+    if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
+      /*
+        PAGE button and LEFT button and TRACK button are pressed:
+          - change left stage for track on current page
+      */
+        stageLeftIndexes[pageIndex][trackIndex] = newStageIndex;
+        render_left_stage_change(trackIndex);
+        return;
+    }
+  }
+  /*
+    PAGE button and LEFT button pressed:
+      - change left stage for all tracks on current page
+  */
+  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+    stageLeftIndexes[pageIndex][trackIndex] = newStageIndex;
+  }
+  render_left_stage_change(-1);
+}
+
+void handle_right_stage_change(byte newStageIndex) {
+  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+    if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
+      /*
+        PAGE button and RIGHT button and TRACK button are pressed:
+          - change right stage for track on current page
+      */
+        stageRightIndexes[pageIndex][trackIndex] = newStageIndex;
+        render_right_stage_change(trackIndex);
+        return;
+    }
+  }
+  /*
+    PAGE button and RIGHT button pressed:
+      - change right stage for all tracks on current page
+  */
+  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+    stageRightIndexes[pageIndex][trackIndex] = newStageIndex;
+  }
+  render_right_stage_change(-1);
+}
+
+void handle_track_press(byte trackIndex) {
+  /*
+    TRACK button pressed:
+      - send midi event to learn with current value
+  */
+
+  control_change(midiChannel, ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
+  MidiUSB.flush();
+  render_track_press(trackIndex);
+
+  delay(100);
+}
+
+void handle_left_midi_value_change(byte trackIndex) {
+  /*
+    TRACK button and LEFT button pressed:
+      listen to POT and change left midi value
+  */
+
+  currentStateCLK = digitalRead(POT_CLK);
+
+  if (currentStateCLK != lastStateCLK  && currentStateCLK == 1) {
+    if (digitalRead(POT_DT) != currentStateCLK) {
+      potValue = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] - potStep;
+      if (potValue < 0) {
+        potValue = 0;
+      }
+
+    } else {
+      potValue = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] + potStep;
+      if (potValue > 127) {
+        potValue = 127;
+      }
+    }
+
+    leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = potValue;
+  }
+
+  render_left_midi_value_change(trackIndex);
+
+  lastStateCLK = currentStateCLK;
+}
+
+void handle_right_midi_value_change(byte trackIndex) {
+  /*
+    TRACK button and RIGHT button pressed:
+      listen to POT and change right midi value
+  */
+
+  currentStateCLK = digitalRead(POT_CLK);
+
+  if (currentStateCLK != lastStateCLK  && currentStateCLK == 1) {
+    if (digitalRead(POT_DT) != currentStateCLK) {
+      potValue = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] - potStep;
+      if (potValue < 0) {
+        potValue = 0;
+      }
+
+    } else {
+      potValue = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] + potStep;
+      if (potValue > 127) {
+        potValue = 127;
+      }
+    }
+
+    rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = potValue;
+  }
+
+  render_right_midi_value_change(trackIndex);
+
+  lastStateCLK = currentStateCLK;
+}
+
+void handle_midi_values_swap(byte trackIndex) {
+  /*
+    TRACK button and LEFT or RIGHT button pressed and POT button are pressed:
+      - swap left and right midi values
+  */
+  byte temp = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]];
+  leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]];
+  rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = temp;
+  render_midi_values_swap(trackIndex);
+
+  delay(100);
+}
+
+// ================
 
 void setup() {
   // Turn off system leds
@@ -251,144 +416,35 @@ void setup() {
 
 
 void loop() {
-  for (int i = 0; i < NUMBER_OF_PAGES; i++) {
+  for (byte i = 0; i < NUMBER_OF_PAGES; i++) {
     if (digitalRead(PAGE_PINS[i]) == LOW) {
-      if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        /*
-          only PAGE button pressed:
-            change page index
-        */
-        pageIndex = i;
-
-        render_page_change();
-        return;
-      } else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
-        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-          if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
-            /*
-              PAGE button and A button pressed:
-                change A stage for pressed track on current page
-            */
-              stageLeftIndexes[pageIndex][trackIndex] = i;
-              render_left_stage_change(trackIndex);
-              return;
-          }
-        }
-        /*
-          PAGE button and A button pressed:
-            change A stage for all tracks on current page
-        */
-        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-          stageLeftIndexes[pageIndex][trackIndex] = i;
-        }
-        render_left_stage_change(-1);
+      if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
+        render_left_stage_change(i);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-          if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
-            /*
-              PAGE button and B button pressed:
-                change B stage for pressed track on current page
-            */
-              stageRightIndexes[pageIndex][trackIndex] = i;
-              render_right_stage_change(trackIndex);
-              return;
-
-          }
-        }
-        /*
-          PAGE button and B button pressed:
-            change B stage for all tracks on current page
-        */
-
-        for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-          stageRightIndexes[pageIndex][trackIndex] = i;
-        }
-        render_right_stage_change(-1);
+        render_right_stage_change(i);
         return;
-      }
+      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
+        handle_page_change(i);
+        return;
+      } 
     }
   }
 
   for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
     if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
       if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        /*
-          only TRACK button pressed:
-            - send midi event to learn with current value
-        */
-
-        control_change(midiChannel, ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
-        MidiUSB.flush();
-        delay(50);
-
-        render_midi_learn_signal(trackIndex);
+        handle_track_press(trackIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH && digitalRead(POT_SW) == HIGH) {
-        /*
-          TRACK button and A button pressed:
-            listen to POT_PIN and change min midi value
-        */
-
-        currentStateCLK = digitalRead(POT_CLK);
-
-        if (currentStateCLK != lastStateCLK  && currentStateCLK == 1) {
-          if (digitalRead(POT_DT) != currentStateCLK) {
-            potValue = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] - potStep;
-            if (potValue < 0) {
-              potValue = 0;
-            }
-
-          } else {
-            potValue = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] + potStep;
-            if (potValue > 127) {
-              potValue = 127;
-            }
-          }
-
-          leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = potValue;
-        }
-
-        render_left_midi_value_change(trackIndex);
-
-        lastStateCLK = currentStateCLK;
+        handle_left_midi_value_change(trackIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW && digitalRead(POT_SW) == HIGH) {
-        /*
-          TRACK button and A button pressed:
-            listen to POT_PIN and change min midi value
-        */
-        currentStateCLK = digitalRead(POT_CLK);
-
-        if (currentStateCLK != lastStateCLK  && currentStateCLK == 1) {
-          if (digitalRead(POT_DT) != currentStateCLK) {
-            potValue = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] - potStep;
-            if (potValue < 0) {
-              potValue = 0;
-            }
-
-          } else {
-            potValue = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] + potStep;
-            if (potValue > 127) {
-              potValue = 127;
-            }
-          }
-
-          rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = potValue;
-        }
-
-        render_right_midi_value_change(trackIndex);
-        lastStateCLK = currentStateCLK;
+        handle_right_midi_value_change(trackIndex);
         return;
       }  else if ((digitalRead(LEFT_PIN) == LOW || digitalRead(RIGHT_PIN) == LOW) && digitalRead(POT_SW) == LOW) {
-        /*
-          TRACK button and A or B button pressed and Pot SW pressed:
-            swap min and max midi values
-        */
-        byte temp = leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]];
-        leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]] = rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]];
-        rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = temp;
-        delay(150);
+        handle_midi_values_swap(trackIndex);
+        return;
       }
     }
   }
