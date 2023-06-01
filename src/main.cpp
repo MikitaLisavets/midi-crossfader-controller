@@ -175,10 +175,10 @@ void render_left_stage_change(int trackIndex) {
   clear_dispay();
   display.setTextSize(2);
   if (trackIndex >= 0) {
-    display.println("L stage: " + String(stageTitles[stageLeftIndexes[pageIndex][trackIndex]]));
+    display.println("Stage L: " + String(stageTitles[stageLeftIndexes[pageIndex][trackIndex]]));
     display.println("Track: " + trackTitles[trackIndex]);
   } else {
-    display.println("L stage: " + String(stageTitles[stageLeftIndexes[pageIndex][0]]));
+    display.println("Stage L: " + String(stageTitles[stageLeftIndexes[pageIndex][0]]));
     display.println("All tracks");
   }
 
@@ -189,10 +189,10 @@ void render_right_stage_change(int trackIndex) {
   clear_dispay();
   display.setTextSize(2);
   if (trackIndex >= 0) {
-    display.println("R stage: " + String(stageTitles[stageRightIndexes[pageIndex][trackIndex]]));
+    display.println("Stage R: " + String(stageTitles[stageRightIndexes[pageIndex][trackIndex]]));
     display.println("Track: " + trackTitles[trackIndex]);
   } else {
-    display.println("R stage: " + String(stageTitles[stageRightIndexes[pageIndex][0]]));
+    display.println("Stage R: " + String(stageTitles[stageRightIndexes[pageIndex][0]]));
     display.println("All tracks");
   }
 
@@ -213,7 +213,7 @@ void render_left_midi_value_change(byte trackIndex) {
   clear_dispay();
   display.setTextSize(2);
 
-  display.println("L value:");
+  display.println("Value L:");
   display.println(String(leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]));
   refresh_dispay();
 }
@@ -222,7 +222,7 @@ void render_right_midi_value_change(byte trackIndex) {
   clear_dispay();
   display.setTextSize(2);
 
-  display.println("R value:");
+  display.println("Value R:");
   display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]));
   refresh_dispay();
 }
@@ -231,9 +231,9 @@ void render_midi_values_swap(byte trackIndex) {
   clear_dispay();
   display.setTextSize(1);
   display.println("Swap L and R values:");
-  display.print("L value: ");
+  display.print("Value L: ");
   display.println(String(leftMidiValues[pageIndex][trackIndex][stageLeftIndexes[pageIndex][trackIndex]]));
-  display.print("R value: ");
+  display.print("Value R: ");
   display.println(String(rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]]));
   display.print("Track: ");
   display.println(trackTitles[trackIndex]);
