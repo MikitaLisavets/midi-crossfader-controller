@@ -14,7 +14,7 @@ const byte FADER_PIN = A0;
 
 const byte POT_CLK = A1;
 const byte POT_DT = A2;
-const byte POT_SW = 15;
+const byte POT_SW = A3;
 
 const byte LEFT_PIN = 10;
 const byte RIGHT_PIN = 16;
@@ -381,7 +381,7 @@ void handle_midi_values_swap(byte trackIndex) {
   rightMidiValues[pageIndex][trackIndex][stageRightIndexes[pageIndex][trackIndex]] = temp;
   render_midi_values_swap(trackIndex);
 
-  delay(100);
+  delay(300);
 }
 
 // ================
@@ -433,10 +433,10 @@ void loop() {
 
   for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
     if (digitalRead(TRACK_PINS[tIndex]) == LOW ) {
-      if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
+      if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH && digitalRead(POT_SW) == HIGH) {
         handle_left_midi_value_change(tIndex);
         return;
-      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
+      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW && digitalRead(POT_SW) == HIGH) {
         handle_right_midi_value_change(tIndex);
         return;
       }  else if ((digitalRead(LEFT_PIN) == LOW || digitalRead(RIGHT_PIN) == LOW) && digitalRead(POT_SW) == LOW) {
