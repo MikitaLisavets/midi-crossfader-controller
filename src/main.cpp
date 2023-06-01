@@ -416,34 +416,34 @@ void setup() {
 
 
 void loop() {
-  for (byte i = 0; i < NUMBER_OF_PAGES; i++) {
-    if (digitalRead(PAGE_PINS[i]) == LOW) {
+  for (byte pIndex = 0; pIndex < NUMBER_OF_PAGES; pIndex++) {
+    if (digitalRead(PAGE_PINS[pIndex]) == LOW) {
       if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
-        render_left_stage_change(i);
+        render_left_stage_change(pIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        render_right_stage_change(i);
+        render_right_stage_change(pIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_page_change(i);
+        handle_page_change(pIndex);
         return;
       } 
     }
   }
 
-  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-    if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
+  for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
+    if (digitalRead(TRACK_PINS[tIndex]) == LOW ) {
       if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_track_press(trackIndex);
+        handle_track_press(tIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH && digitalRead(POT_SW) == HIGH) {
-        handle_left_midi_value_change(trackIndex);
+        handle_left_midi_value_change(tIndex);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW && digitalRead(POT_SW) == HIGH) {
-        handle_right_midi_value_change(trackIndex);
+        handle_right_midi_value_change(tIndex);
         return;
       }  else if ((digitalRead(LEFT_PIN) == LOW || digitalRead(RIGHT_PIN) == LOW) && digitalRead(POT_SW) == LOW) {
-        handle_midi_values_swap(trackIndex);
+        handle_midi_values_swap(tIndex);
         return;
       }
     }
