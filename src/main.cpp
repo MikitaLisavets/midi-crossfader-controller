@@ -3,6 +3,9 @@
 #include <MIDIUSB.h> // Source: https://github.com/arduino-libraries/MIDIUSB
 #include <GyverOLED.h> // Source: https://github.com/GyverLibs/GyverOLED
 #include <EncButton.h> // Source: https://github.com/GyverLibs/EncButton
+#include <EEPROM.h>
+
+#define STR_ADDR 0
 
 #define CLK_PIN 1
 #define DT_PIN 0
@@ -16,17 +19,43 @@
 #define NUMBER_OF_PAGES 4
 #define NUMBER_OF_STAGES 4
 
+#define MAX_MENU_ROWS 20
+#define SCREEN_MENU_ROWS 3
+
 const uint8_t TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
 const uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {8, 9, 10, 16};
 
 GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
 EncButton<EB_TICK, DT_PIN, CLK_PIN, SW_PIN> encoder;
 
+bool isMenuMode = false;
 uint8_t pageIndex = 0;
-
 int16_t potValue;
-
 int16_t faderValue = 0;
+int8_t menu_selected_row = 0;
+
+enum menu_t : uint8_t {
+  MENU_LOAD = 0,
+  MENU_SAVE = 1,
+  MENU_MIDI_CHANNEL = 2,
+  MENU_FADER_THRESHOLD = 3,
+  MENU_A1_CC = 4,
+  MENU_B1_CC = 5,
+  MENU_C1_CC = 6,
+  MENU_D1_CC = 7,
+  MENU_A2_CC = 8,
+  MENU_B2_CC = 9,
+  MENU_C2_CC = 10,
+  MENU_D2_CC = 11,
+  MENU_A3_CC = 12,
+  MENU_B3_CC = 13,
+  MENU_C3_CC = 14,
+  MENU_D3_CC = 15,
+  MENU_A4_CC = 16,
+  MENU_B4_CC = 17,
+  MENU_C4_CC = 18,
+  MENU_D4_CC = 19,
+};
 
 char pageTitles[] = { '1', '2', '3', '4' };
 char stageTitles[] = { '1', '2', '3', '4' };
@@ -101,6 +130,7 @@ void control_change(byte channel, byte control, byte value) {
 void clear_dispay() {
   display.clear();
   display.setScale(1);
+  display.invertText(false);
   display.setCursor(0, 0);
 }
 
@@ -254,6 +284,97 @@ void render_midi_values_swap(byte trackIndex) {
 
 // ===============
 
+// === Menu ===
+
+void render_row_load() {
+  display.println(F("Load Settings"));
+}
+
+void render_row_save() {
+  display.println(F("Save Settings"));
+}
+
+void render_row_midi_channel() {
+  display.print(F("MIDI Channel: "));
+  display.println(settings.midiChannel);
+}
+
+void render_row_fader_threshold() {
+  display.print(F("Fader Threshold: "));
+  display.println(settings.faderThreshold);
+}
+
+void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex) {
+  display.print(F("Track "));
+  display.print(trackTitles[trackIndex]);
+  display.print(pageTitles[pageIndex]);
+  display.print(F(" CC: "));
+  display.println(settings.ccValues[pageIndex][trackIndex]);
+}
+
+void render_row(int8_t row_index) {
+  bool is_selected = row_index == menu_selected_row;
+  if (is_selected) {
+    display.invertText(true);
+  } else {
+    display.invertText(false);
+  }
+
+  switch(row_index) {
+    case MENU_LOAD: return render_row_load();
+    case MENU_SAVE: return render_row_save();
+    case MENU_MIDI_CHANNEL: return render_row_midi_channel();
+    case MENU_FADER_THRESHOLD: return render_row_fader_threshold();
+    case MENU_A1_CC: return render_row_track_cc(0, 0);
+    case MENU_B1_CC: return render_row_track_cc(0, 1);
+    case MENU_C1_CC: return render_row_track_cc(0, 2);
+    case MENU_D1_CC: return render_row_track_cc(0, 3);
+    case MENU_A2_CC: return render_row_track_cc(1, 0);
+    case MENU_B2_CC: return render_row_track_cc(1, 1);
+    case MENU_C2_CC: return render_row_track_cc(1, 2);
+    case MENU_D2_CC: return render_row_track_cc(1, 3);
+    case MENU_A3_CC: return render_row_track_cc(2, 0);
+    case MENU_B3_CC: return render_row_track_cc(2, 1);
+    case MENU_C3_CC: return render_row_track_cc(2, 2);
+    case MENU_D3_CC: return render_row_track_cc(2, 3);
+    case MENU_A4_CC: return render_row_track_cc(3, 0);
+    case MENU_B4_CC: return render_row_track_cc(3, 1);
+    case MENU_C4_CC: return render_row_track_cc(3, 2);
+    case MENU_D4_CC: return render_row_track_cc(3, 3);
+  }
+}
+
+void render_menu() {
+  clear_dispay();
+  display.setCursor(30, 0);
+  display.println(F("=== Menu ==="));
+  display.setCursor(0, 1);
+  for (byte i = 0; i < SCREEN_MENU_ROWS; i++) {
+    if (menu_selected_row < SCREEN_MENU_ROWS) {
+      render_row(i);
+    } else {
+      render_row(menu_selected_row - SCREEN_MENU_ROWS + 1 + i);
+    }
+  }
+  refresh_dispay();
+}
+
+void render_loading() {
+  clear_dispay();
+  display.setScale(2);
+  display.println(F("Loading..."));
+  refresh_dispay();
+}
+
+void render_saving() {
+  clear_dispay();
+  display.setScale(2);
+  display.println(F("Saving..."));
+  refresh_dispay();
+}
+
+// ============
+
 // === Handlers ===
 
 void handle_page_press(byte newPageIndex) {
@@ -323,24 +444,31 @@ void handle_track_press(byte trackIndex) {
   delay(100);
 }
 
+uint8_t safe_midi_value(int16_t unsafe_midi_value) {
+  if (potValue > 127) {
+    return 127;
+  } else if (potValue < 0) {
+    return 0;
+  } else {
+    return unsafe_midi_value;
+  }
+}
+
 void handle_left_midi_value_change(byte trackIndex) {
   /*
     TRACK button and LEFT button pressed:
       listen to POT and change left midi value
   */
+  uint8_t speed;
 
   if (encoder.isRight()) {
-      potValue = settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] + (encoder.isFast() ? 5 : 1);
-      if (potValue > 127) {
-        potValue = 127;
-      }
+      speed = encoder.isFast() ? 5 : encoder.isRightH() ? 10 : 1;
+      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] + speed);
       settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
     }
     if (encoder.isLeft()) {
-      potValue = settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] - (encoder.isFast() ? 5 : 1);
-      if (potValue < 0) {
-        potValue = 0;
-      }
+      speed = encoder.isFast() ? 5 : encoder.isLeftH() ? 10 : 1;
+      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] - speed);
       settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
     }
 
@@ -349,24 +477,22 @@ void handle_left_midi_value_change(byte trackIndex) {
 }
 
 void handle_right_midi_value_change(byte trackIndex) {
+  uint8_t speed;
   /*
     TRACK button and RIGHT button pressed:
       listen to POT and change right midi value
   */
 
- Serial.println(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
   if (encoder.isRight()) {
-    potValue = settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] + (encoder.isFast() ? 5 : 1);
-    if (potValue > 127) {
-      potValue = 127;
-    }
+    speed = encoder.isFast() ? 5 : encoder.isRightH() ? 10 : 1;
+
+    potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] + speed);
     settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
   }
   if (encoder.isLeft()) {
-    potValue = settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] - (encoder.isFast() ? 5 : 1);
-    if (potValue < 0) {
-      potValue = 0;
-    }
+    speed = encoder.isFast() ? 5 : encoder.isLeftH() ? 10 : 1;
+
+    potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] - speed);
     settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
   }
 
@@ -386,6 +512,161 @@ void handle_midi_values_swap(byte trackIndex) {
   delay(300);
 }
 
+void handle_menu() {
+  if (encoder.isRight()) {
+    menu_selected_row++;
+    if (menu_selected_row >= MAX_MENU_ROWS) {
+      menu_selected_row = 0;
+    }
+  }
+
+  if (encoder.isLeft()) {
+    menu_selected_row--;
+    if (menu_selected_row < 0) {
+      menu_selected_row = MAX_MENU_ROWS - 1;
+    }
+  }
+
+  if (encoder.isClick()) {
+    if (menu_selected_row == MENU_LOAD) {
+      render_loading();
+      EEPROM.get(STR_ADDR, settings);
+      delay(300);
+    }
+    if (menu_selected_row == MENU_SAVE) {
+      render_saving();
+      EEPROM.put(STR_ADDR, settings);
+      delay(300);
+    }
+  }
+
+  if (digitalRead(LEFT_PIN) == LOW) {
+    if (menu_selected_row == MENU_MIDI_CHANNEL) {
+      settings.midiChannel = safe_midi_value(settings.midiChannel - 1);
+    }
+    if (menu_selected_row == MENU_FADER_THRESHOLD) {
+      int16_t newValue = settings.faderThreshold - 1;
+      if (newValue < 0) {
+        newValue = 0;
+      }
+      settings.faderThreshold = newValue;
+    }
+    if (menu_selected_row == MENU_A1_CC) {
+      settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] - 1);
+    }
+    if (menu_selected_row == MENU_B1_CC) {
+      settings.ccValues[0][1] = safe_midi_value(settings.ccValues[0][1] - 1);
+    }
+    if (menu_selected_row == MENU_C1_CC) {
+      settings.ccValues[0][2] = safe_midi_value(settings.ccValues[0][2] - 1);
+    }
+    if (menu_selected_row == MENU_D1_CC) {
+      settings.ccValues[0][3] = safe_midi_value(settings.ccValues[0][3] - 1);
+    }
+    if (menu_selected_row == MENU_A2_CC) {
+      settings.ccValues[1][0] = safe_midi_value(settings.ccValues[1][0] - 1);
+    }
+    if (menu_selected_row == MENU_B2_CC) {
+      settings.ccValues[1][1] = safe_midi_value(settings.ccValues[1][1] - 1);
+    }
+    if (menu_selected_row == MENU_C2_CC) {
+      settings.ccValues[1][2] = safe_midi_value(settings.ccValues[1][2] - 1);
+    }
+    if (menu_selected_row == MENU_D2_CC) {
+      settings.ccValues[1][3] = safe_midi_value(settings.ccValues[1][3] - 1);
+    }
+    if (menu_selected_row == MENU_A3_CC) {
+      settings.ccValues[2][0] = safe_midi_value(settings.ccValues[2][0] - 1);
+    }
+    if (menu_selected_row == MENU_B3_CC) {
+      settings.ccValues[2][1] = safe_midi_value(settings.ccValues[2][1] - 1);
+    }
+    if (menu_selected_row == MENU_C3_CC) {
+      settings.ccValues[2][2] = safe_midi_value(settings.ccValues[2][2] - 1);
+    }
+    if (menu_selected_row == MENU_D3_CC) {
+      settings.ccValues[2][3] = safe_midi_value(settings.ccValues[2][3] - 1);
+    }
+    if (menu_selected_row == MENU_A4_CC) {
+      settings.ccValues[3][0] = safe_midi_value(settings.ccValues[3][0] - 1);
+    }
+    if (menu_selected_row == MENU_B4_CC) {
+      settings.ccValues[3][1] = safe_midi_value(settings.ccValues[3][1] - 1);
+    }
+    if (menu_selected_row == MENU_C4_CC) {
+      settings.ccValues[3][2] = safe_midi_value(settings.ccValues[3][2] - 1);
+    }
+    if (menu_selected_row == MENU_D4_CC) {
+      settings.ccValues[3][3] = safe_midi_value(settings.ccValues[3][3] - 1);
+    }
+    delay(150);
+  }
+
+  if (digitalRead(RIGHT_PIN) == LOW) {
+    if (menu_selected_row == MENU_MIDI_CHANNEL) {
+      settings.midiChannel = safe_midi_value(settings.midiChannel + 1);
+    }
+    if (menu_selected_row == MENU_FADER_THRESHOLD) {
+      int16_t newValue = settings.faderThreshold + 1;
+      if (newValue > 1023) {
+        newValue = 1023;
+      }
+      settings.faderThreshold = newValue;
+    }
+    if (menu_selected_row == MENU_A1_CC) {
+      settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] + 1);
+    }
+    if (menu_selected_row == MENU_B1_CC) {
+      settings.ccValues[0][1] = safe_midi_value(settings.ccValues[0][1] + 1);
+    }
+    if (menu_selected_row == MENU_C1_CC) {
+      settings.ccValues[0][2] = safe_midi_value(settings.ccValues[0][2] + 1);
+    }
+    if (menu_selected_row == MENU_D1_CC) {
+      settings.ccValues[0][3] = safe_midi_value(settings.ccValues[0][3] + 1);
+    }
+    if (menu_selected_row == MENU_A2_CC) {
+      settings.ccValues[1][0] = safe_midi_value(settings.ccValues[1][0] + 1);
+    }
+    if (menu_selected_row == MENU_B2_CC) {
+      settings.ccValues[1][1] = safe_midi_value(settings.ccValues[1][1] + 1);
+    }
+    if (menu_selected_row == MENU_C2_CC) {
+      settings.ccValues[1][2] = safe_midi_value(settings.ccValues[1][2] + 1);
+    }
+    if (menu_selected_row == MENU_D2_CC) {
+      settings.ccValues[1][3] = safe_midi_value(settings.ccValues[1][3] + 1);
+    }
+    if (menu_selected_row == MENU_A3_CC) {
+      settings.ccValues[2][0] = safe_midi_value(settings.ccValues[2][0] + 1);
+    }
+    if (menu_selected_row == MENU_B3_CC) {
+      settings.ccValues[2][1] = safe_midi_value(settings.ccValues[2][1] + 1);
+    }
+    if (menu_selected_row == MENU_C3_CC) {
+      settings.ccValues[2][2] = safe_midi_value(settings.ccValues[2][2] + 1);
+    }
+    if (menu_selected_row == MENU_D3_CC) {
+      settings.ccValues[2][3] = safe_midi_value(settings.ccValues[2][3] + 1);
+    }
+    if (menu_selected_row == MENU_A4_CC) {
+      settings.ccValues[3][0] = safe_midi_value(settings.ccValues[3][0] + 1);
+    }
+    if (menu_selected_row == MENU_B4_CC) {
+      settings.ccValues[3][1] = safe_midi_value(settings.ccValues[3][1] + 1);
+    }
+    if (menu_selected_row == MENU_C4_CC) {
+      settings.ccValues[3][2] = safe_midi_value(settings.ccValues[3][2] + 1);
+    }
+    if (menu_selected_row == MENU_D4_CC) {
+      settings.ccValues[3][3] = safe_midi_value(settings.ccValues[3][3] + 1);
+    }
+    delay(150);
+  }
+  
+  render_menu();
+}
+
 // ================
 
 void isr() {
@@ -393,6 +674,8 @@ void isr() {
 }
 
 void setup() {
+  Serial.begin(9600);
+
   // Turn off system leds
   pinMode(LED_BUILTIN_TX, INPUT);
   pinMode(LED_BUILTIN_RX, INPUT);
@@ -473,7 +756,24 @@ void loop() {
       MidiUSB.flush();
     }
   }
+  
+  if (!isMenuMode && encoder.isClick()) {
+    isMenuMode = true;
+  }
 
-  render_main();
+  if (isMenuMode) {
+    handle_menu();
+
+    for (byte pIndex = 0; pIndex < NUMBER_OF_PAGES; pIndex++) {
+      for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
+        if (digitalRead(PAGE_PINS[pIndex]) == LOW || digitalRead(TRACK_PINS[tIndex]) == LOW) {
+          isMenuMode = false;
+          delay(100);
+        }
+      }
+    }
+  } else {
+    render_main();
+  }
 }
 
