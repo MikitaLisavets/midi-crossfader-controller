@@ -93,10 +93,10 @@ struct Settings {
   };
 
   uint8_t ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
-    {0, 1, 2, 3},
-    {4, 5, 6, 7},
-    {8, 9, 10, 11},
-    {12, 13, 14, 15}
+    {1, 2, 3, 4},
+    {5, 6, 7, 8},
+    {9, 10, 11, 12},
+    {13, 14, 15, 16}
   };
 };
 
@@ -445,9 +445,9 @@ void handle_track_press(byte trackIndex) {
 }
 
 uint8_t safe_midi_value(int16_t unsafe_midi_value) {
-  if (potValue > 127) {
+  if (unsafe_midi_value > 127) {
     return 127;
-  } else if (potValue < 0) {
+  } else if (unsafe_midi_value < 0) {
     return 0;
   } else {
     return unsafe_midi_value;
