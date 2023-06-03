@@ -182,7 +182,7 @@ void render_main() {
   for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
     display.print(trackTitles[i]);
     display.print(pageTitles[pageIndex]);
-    display.print(F("|"));
+    display.print(F(": "));
     display.print(stageTitles[settings.stageLeftIndexes[pageIndex][i]]);
     display.print(F("| "));
     render_filled_number(settings.leftMidiValues[pageIndex][i][settings.stageLeftIndexes[pageIndex][i]]);
@@ -541,6 +541,16 @@ void handle_menu() {
   }
 
   if (digitalRead(LEFT_PIN) == LOW) {
+    if (menu_selected_row == MENU_LOAD) {
+      render_loading();
+      EEPROM.get(STR_ADDR, settings);
+      delay(300);
+    }
+    if (menu_selected_row == MENU_SAVE) {
+      render_saving();
+      EEPROM.put(STR_ADDR, settings);
+      delay(300);
+    }
     if (menu_selected_row == MENU_MIDI_CHANNEL) {
       settings.midiChannel = safe_midi_value(settings.midiChannel - 1);
     }
@@ -603,6 +613,16 @@ void handle_menu() {
   }
 
   if (digitalRead(RIGHT_PIN) == LOW) {
+    if (menu_selected_row == MENU_LOAD) {
+      render_loading();
+      EEPROM.get(STR_ADDR, settings);
+      delay(300);
+    }
+    if (menu_selected_row == MENU_SAVE) {
+      render_saving();
+      EEPROM.put(STR_ADDR, settings);
+      delay(300);
+    }
     if (menu_selected_row == MENU_MIDI_CHANNEL) {
       settings.midiChannel = safe_midi_value(settings.midiChannel + 1);
     }
@@ -768,6 +788,7 @@ void loop() {
       for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
         if (digitalRead(PAGE_PINS[pIndex]) == LOW || digitalRead(TRACK_PINS[tIndex]) == LOW) {
           isMenuMode = false;
+          menu_selected_row = 0;
           delay(100);
         }
       }
