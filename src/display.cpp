@@ -70,15 +70,15 @@ void render_main() {
     display.print(trackTitles[i]);
     display.print(pageTitles[pageIndex]);
     display.print(F(": "));
-    display.print(stageTitles[settings.stageLeftIndexes[pageIndex][i]]);
+    display.print(stageTitles[settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
     display.print(F("| "));
-    render_filled_number(settings.leftMidiValues[pageIndex][i][settings.stageLeftIndexes[pageIndex][i]]);
+    render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][i][settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
     display.print(F("<"));
     render_filled_number(midiValues[pageIndex][i]);
     display.print(F(">"));
-    render_filled_number(settings.rightMidiValues[pageIndex][i][settings.stageRightIndexes[pageIndex][i]]);
+    render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][i][settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
     display.print(F(" |"));
-    display.print(stageTitles[settings.stageRightIndexes[pageIndex][i]]);
+    display.print(stageTitles[settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
     display.print(F("|"));
     display.println();
   }
@@ -92,21 +92,19 @@ void render_stage_change(int8_t trackIndex, side_t side) {
   if (trackIndex >= 0) {
     if (side == SIDE_LEFT) {
       display.print(F("Stage L: "));
-      display.println(stageTitles[settings.stageLeftIndexes[pageIndex][trackIndex]]);
     } else {
       display.print(F("Stage R: "));
-      display.println(stageTitles[settings.stageRightIndexes[pageIndex][trackIndex]]);
     }
+    display.println(stageTitles[settings.stageIndexes[side][pageIndex][trackIndex]]);
     display.print(F("Track: "));
     display.println(trackTitles[trackIndex]);
   } else {
     if (side == SIDE_LEFT) {
       display.print(F("Stage L: "));
-      display.println(stageTitles[settings.stageLeftIndexes[pageIndex][0]]);
     } else {
       display.print(F("Stage R: "));
-      display.println(stageTitles[settings.stageRightIndexes[pageIndex][0]]);
     }
+    display.println(stageTitles[settings.stageIndexes[side][pageIndex][0]]);
     display.println(F("All tracks"));
   }
 
@@ -130,11 +128,11 @@ void render_midi_value_change(int8_t trackIndex, side_t side) {
 
   if (side == SIDE_LEFT) {
     display.println(F("Value L:"));
-    display.println(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]);
   } else {
     display.println(F("Value R:"));
-    display.println(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
   }
+
+  display.println(settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]]);
 
   refresh_dispay();
 }
@@ -143,9 +141,9 @@ void render_midi_values_swap(int8_t trackIndex) {
   clear_dispay();
   display.println(F("Swap L and R values:"));
   display.print(F("Value L: "));
-  display.println(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]);
+  display.println(settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
   display.print(F("Value R: "));
-  display.println(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
+  display.println(settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
   display.print(F("Track: "));
   display.println(trackTitles[trackIndex]);
   refresh_dispay();

@@ -15,6 +15,8 @@
 #define NUMBER_OF_PAGES 4
 #define NUMBER_OF_STAGES 4
 
+#define NUMBER_OF_SIDES 2
+
 #define MAX_MENU_ROWS 20
 #define SCREEN_MENU_ROWS 3
 
@@ -51,8 +53,8 @@ enum menu_t : uint8_t {
 };
 
 enum side_t : int8_t {
-  SIDE_LEFT = 1,
-  SIDE_RIGHT = 2,
+  SIDE_LEFT = 0,
+  SIDE_RIGHT = 1,
 };
 
 extern char stageTitles[];
@@ -62,15 +64,8 @@ extern char pageTitles[];
 struct Settings {
   uint8_t midiChannel;
   uint8_t faderThreshold;
-
-  uint8_t stageLeftIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
-
-  uint8_t stageRightIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
-
-  uint8_t leftMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS][NUMBER_OF_STAGES];
-
-  uint8_t rightMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS][NUMBER_OF_STAGES];
-
+  uint8_t stageIndexes[NUMBER_OF_SIDES][NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
+  uint8_t midiValues[NUMBER_OF_SIDES][NUMBER_OF_PAGES][NUMBER_OF_TRACKS][NUMBER_OF_STAGES];
   uint8_t ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
 };
 

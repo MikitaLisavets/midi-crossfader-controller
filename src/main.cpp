@@ -21,29 +21,33 @@ char pageTitles[] = { '1', '2', '3', '4' };
 Settings settings = {
   .midiChannel = 0,
   .faderThreshold = 10,
-  .stageLeftIndexes = {
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0}
+  .stageIndexes = {
+    {
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0}
+    },
+    {
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0},
+      {0, 0, 0, 0}
+    }
   },
-  .stageRightIndexes = {
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0}
-  },
-  .leftMidiValues = {
-    {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-    {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-    {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-    {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}
-  },
-  .rightMidiValues = {
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}}
+  .midiValues = {
+    {
+      {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+      {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+      {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+      {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}
+    },
+    {
+      {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
+      {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
+      {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
+      {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}}
+    }
   },
   .ccValues = {
     {1, 2, 3, 4},
@@ -89,22 +93,14 @@ void handle_stage_change(int8_t newStageIndex, side_t side) {
       PAGE button and LEFT/RIGHT button and TRACK button are pressed:
         - change left/right stage for track on current page
     */
-    if (side == SIDE_LEFT) {
-      settings.stageLeftIndexes[pageIndex][trackIndex] = newStageIndex;
-    } else {
-      settings.stageRightIndexes[pageIndex][trackIndex] = newStageIndex;
-    }
+    settings.stageIndexes[side][pageIndex][trackIndex] = newStageIndex;
   } else {
     /*
       PAGE button and LEFT/RIGHT button pressed:
         - change left/right stage for all tracks on current page
     */
     for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
-      if (side == SIDE_LEFT) {
-        settings.stageLeftIndexes[pageIndex][tIndex] = newStageIndex;
-      } else {
-        settings.stageRightIndexes[pageIndex][tIndex] = newStageIndex;
-      }
+      settings.stageIndexes[side][pageIndex][tIndex] = newStageIndex;
     }
   }
 
@@ -143,23 +139,13 @@ void handle_midi_value_change(int8_t trackIndex, side_t side) {
 
   if (is_encoder_turned_right()) {
     speed = is_encoder_turned_fast() ? 5 : 1;
-    if (side == SIDE_LEFT) {
-      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] + speed);
-      settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
-    } else {
-      potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] + speed);
-      settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
-    }
+    potValue = safe_midi_value(settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] + speed);
+    settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] = potValue;
   }
   if (is_encoder_turned_left()) {
     speed = is_encoder_turned_fast() ? 5 : 1;
-    if (side == SIDE_LEFT) {
-      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] - speed);
-      settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
-    } else {
-      potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] - speed);
-      settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
-    }
+    potValue = safe_midi_value(settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] - speed);
+    settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] = potValue;
   }
 
   render_midi_value_change(trackIndex, side);
@@ -170,9 +156,9 @@ void handle_midi_values_swap(byte trackIndex) {
     TRACK button and LEFT or RIGHT button pressed and POT button are pressed:
       - swap left and right midi values
   */
-  byte temp = settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]];
-  settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]];
-  settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = temp;
+  byte temp = settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]];
+  settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]] = settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]];
+  settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]] = temp;
   render_midi_values_swap(trackIndex);
 
   delay(300);
@@ -422,10 +408,10 @@ void loop() {
   }
 
   for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-    if (settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] < settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]) {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 1023 - settings.faderThreshold, 0 + settings.faderThreshold, settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]], settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]);
+    if (settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]] < settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]) {
+      midiValues[pageIndex][trackIndex] = map(faderValue, 1023 - settings.faderThreshold, 0 + settings.faderThreshold, settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]], settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
     } else {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 0 + settings.faderThreshold, 1023 - settings.faderThreshold, settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]], settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
+      midiValues[pageIndex][trackIndex] = map(faderValue, 0 + settings.faderThreshold, 1023 - settings.faderThreshold, settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]], settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
     }
 
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
