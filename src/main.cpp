@@ -85,10 +85,8 @@ void handle_page_press(uint8_t newPageIndex) {
   render_page_press();
 }
 
-void handle_stage_change(int8_t newStageIndex, side_t side) {
-  int8_t trackIndex = get_pressed_track_button();
-
-  if (trackIndex >= 0) {
+void handle_stage_change(int8_t newStageIndex, int8_t trackIndex, side_t side) {
+  if (is_button_pressed(trackIndex)) {
     /*
       PAGE button and LEFT/RIGHT button and TRACK button are pressed:
         - change left/right stage for track on current page
@@ -192,7 +190,7 @@ void handle_menu() {
     }
   }
 
-  if (digitalRead(LEFT_PIN) == LOW) {
+  if (is_left_button_pressed()) {
     if (menu_selected_row == MENU_LOAD) {
       render_loading();
       load_settings(settings);
@@ -264,7 +262,7 @@ void handle_menu() {
     delay(150);
   }
 
-  if (digitalRead(RIGHT_PIN) == LOW) {
+  if (is_right_button_pressed()) {
     if (menu_selected_row == MENU_LOAD) {
       render_loading();
       load_settings(settings);
@@ -367,40 +365,46 @@ void setup() {
 void loop() {
   encoder_tick();
 
-  for (byte pIndex = 0; pIndex < NUMBER_OF_PAGES; pIndex++) {
-    if (digitalRead(PAGE_PINS[pIndex]) == LOW) {
-      if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_stage_change(pIndex, SIDE_LEFT);
-        return;
-      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        handle_stage_change(pIndex, SIDE_RIGHT);
-        return;
-      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_page_press(pIndex);
-        return;
-      } 
-    }
-  }
+  int8_t pIndex = get_pressed_page_button();
+  int8_t tIndex = get_pressed_track_button();
 
-  for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
-    if (digitalRead(TRACK_PINS[tIndex]) == LOW) {
-      if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_midi_value_change(tIndex, SIDE_LEFT);
-        return;
-      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        handle_midi_value_change(tIndex, SIDE_RIGHT);
-        return;
-      }  else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == LOW) {
-        handle_midi_values_swap(tIndex);
-        return;
-      } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_track_press(tIndex);
-        return;
-      } 
+  if (is_left_button_pressed() && is_right_button_pressed()) {
+    if (is_button_pressed(tIndex)) {
+      handle_midi_values_swap(tIndex);
+      return;
     }
+  } else if (is_left_button_pressed()) {
+    if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
+      handle_stage_change(pIndex, tIndex, SIDE_LEFT);
+      return;
+    } else if (is_button_pressed(pIndex)) {
+      handle_stage_change(pIndex, -1, SIDE_LEFT);
+      return;
+    } else if (is_button_pressed(tIndex)) {
+      handle_midi_value_change(tIndex, SIDE_LEFT);
+      return;
+    }
+  } else if (is_right_button_pressed()) {
+    if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
+      handle_stage_change(pIndex, tIndex, SIDE_RIGHT);
+      return;
+    } else if (is_button_pressed(pIndex)) {
+      handle_stage_change(pIndex, -1, SIDE_RIGHT);
+      return;
+    } else if (is_button_pressed(tIndex)) {
+      handle_midi_value_change(tIndex, SIDE_RIGHT);
+      return;
+    }
+  } else if (is_button_pressed(tIndex)) {
+    handle_track_press(tIndex);
+    return;
+  } else if (is_button_pressed(pIndex)) {
+    handle_page_press(pIndex);
+    return;
   }
 
   faderValue = analogRead(FADER_PIN);
+
   if (faderValue > 1023 - settings.faderThreshold) {
     faderValue = 1023 - settings.faderThreshold;
   } else if (faderValue < 0 + settings.faderThreshold) {
@@ -427,15 +431,10 @@ void loop() {
 
   if (isMenuMode) {
     handle_menu();
-
-    for (byte pIndex = 0; pIndex < NUMBER_OF_PAGES; pIndex++) {
-      for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
-        if (digitalRead(PAGE_PINS[pIndex]) == LOW || digitalRead(TRACK_PINS[tIndex]) == LOW) {
-          isMenuMode = false;
-          menu_selected_row = 0;
-          delay(100);
-        }
-      }
+    if (is_button_pressed(pIndex) || is_button_pressed(tIndex)) {
+      isMenuMode = false;
+      menu_selected_row = 0;
+      delay(100);
     }
   } else {
     render_main();

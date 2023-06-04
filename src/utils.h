@@ -16,6 +16,7 @@ bool is_encoder_clicked();
 bool is_left_button_pressed();
 bool is_right_button_pressed();
 bool is_track_button_pressed();
+bool is_button_pressed(int8_t buttonIndex);
 int8_t get_pressed_track_button();
 int8_t get_pressed_page_button();
 

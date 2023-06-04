@@ -139,10 +139,10 @@ void render_midi_value_change(int8_t trackIndex, side_t side) {
 
 void render_midi_values_swap(int8_t trackIndex) {
   clear_dispay();
-  display.println(F("Swap L and R values:"));
-  display.print(F("Value L: "));
-  display.println(settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
-  display.print(F("Value R: "));
+  display.setScale(2);
+  display.println(F("Swap values"));
+  display.print(settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
+  display.print(F(" <> "));
   display.println(settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
   display.print(F("Track: "));
   display.println(trackTitles[trackIndex]);

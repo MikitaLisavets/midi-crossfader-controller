@@ -51,6 +51,10 @@ bool is_right_button_pressed() {
   return digitalRead(RIGHT_PIN) == LOW;
 }
 
+bool is_button_pressed(int8_t buttonIndex) {
+  return buttonIndex >= 0;
+}
+
 int8_t get_pressed_track_button() {
   for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
     if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
