@@ -1,32 +1,12 @@
-#include <Arduino.h>
-#include <SPI.h>
-#include <MIDIUSB.h> // Source: https://github.com/arduino-libraries/MIDIUSB
-#include <GyverOLED.h> // Source: https://github.com/GyverLibs/GyverOLED
-#include <EncButton.h> // Source: https://github.com/GyverLibs/EncButton
-#include <EEPROM.h>
+#include <main.h>
+#include <display.h>
+#include <midi.h>
+#include <utils.h>
 
-#define STR_ADDR 0
+// === Initialize variables ===
 
-#define CLK_PIN 1
-#define DT_PIN 0
-#define SW_PIN A3
-
-#define FADER_PIN A0
-#define LEFT_PIN A1
-#define RIGHT_PIN A2
-
-#define NUMBER_OF_TRACKS 4
-#define NUMBER_OF_PAGES 4
-#define NUMBER_OF_STAGES 4
-
-#define MAX_MENU_ROWS 20
-#define SCREEN_MENU_ROWS 3
-
-const uint8_t TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
-const uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {8, 9, 10, 16};
-
-GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
-EncButton<EB_TICK, DT_PIN, CLK_PIN, SW_PIN> encoder;
+uint8_t TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
+uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {8, 9, 10, 16};
 
 bool isMenuMode = false;
 uint8_t pageIndex = 0;
@@ -34,73 +14,44 @@ int16_t potValue;
 int16_t faderValue = 0;
 int8_t menu_selected_row = 0;
 
-enum menu_t : uint8_t {
-  MENU_LOAD = 0,
-  MENU_SAVE = 1,
-  MENU_MIDI_CHANNEL = 2,
-  MENU_FADER_THRESHOLD = 3,
-  MENU_A1_CC = 4,
-  MENU_B1_CC = 5,
-  MENU_C1_CC = 6,
-  MENU_D1_CC = 7,
-  MENU_A2_CC = 8,
-  MENU_B2_CC = 9,
-  MENU_C2_CC = 10,
-  MENU_D2_CC = 11,
-  MENU_A3_CC = 12,
-  MENU_B3_CC = 13,
-  MENU_C3_CC = 14,
-  MENU_D3_CC = 15,
-  MENU_A4_CC = 16,
-  MENU_B4_CC = 17,
-  MENU_C4_CC = 18,
-  MENU_D4_CC = 19,
-};
-
-char pageTitles[] = { '1', '2', '3', '4' };
 char stageTitles[] = { '1', '2', '3', '4' };
 char trackTitles[] = { 'A', 'B', 'C', 'D' };
-struct Settings {
-  uint8_t midiChannel = 0;
-  uint8_t faderThreshold = 10;
+char pageTitles[] = { '1', '2', '3', '4' };
 
-  uint8_t stageLeftIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+Settings settings = {
+  .midiChannel = 0,
+  .faderThreshold = 10,
+  .stageLeftIndexes = {
     {0, 0, 0, 0},
     {0, 0, 0, 0},
     {0, 0, 0, 0},
     {0, 0, 0, 0}
-  };
-
-  uint8_t stageRightIndexes[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  },
+  .stageRightIndexes = {
     {0, 0, 0, 0},
     {0, 0, 0, 0},
     {0, 0, 0, 0},
     {0, 0, 0, 0}
-  };
-
-  uint8_t leftMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS][NUMBER_OF_STAGES] = {
+  },
+  .leftMidiValues = {
     {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
     {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
     {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
     {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}
-  };
-
-  uint8_t rightMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS][NUMBER_OF_STAGES] = {
+  },
+  .rightMidiValues = {
     {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
     {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
     {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
     {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}}
-  };
-
-  uint8_t ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
+  },
+  .ccValues = {
     {1, 2, 3, 4},
     {5, 6, 7, 8},
     {9, 10, 11, 12},
     {13, 14, 15, 16}
-  };
+  }
 };
-
-Settings settings;
 
 uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {0, 0, 0, 0},
@@ -116,268 +67,11 @@ uint8_t previousMidiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {0, 0, 0, 0}
 };
 
-// === MIDI ===
-
-void control_change(byte channel, byte control, byte value) {
-  midiEventPacket_t event = {0x0B, static_cast<uint8_t>(0xB0 | channel), control, value};
-  MidiUSB.sendMIDI(event);
-}
-
-// ============
-
-// === Display ===
-
-void clear_dispay() {
-  display.clear();
-  display.setScale(1);
-  display.invertText(false);
-  display.setCursor(0, 0);
-}
-
-void refresh_dispay() {
-  display.update();
-}
-
-void render_filled_number(uint8_t num) {
-  display.print(num);
-
-  if (num < 10) {
-    display.print(F(".."));
-  } else if (num >= 10 && num < 100) {
-    display.print(F("."));
-  }
-}
-
-void render_init() {
-  clear_dispay();
-
-  display.setScale(2);
-  display.setCursor(25, 1);
-  display.print(F("X"));
-  refresh_dispay();
-  delay(30);
-  display.print(F("-"));
-  refresh_dispay();
-  delay(30);
-  display.print(F("F"));
-  refresh_dispay();
-  delay(30);
-  display.print(F("a"));
-  refresh_dispay();
-  delay(30);
-  display.print(F("d"));
-  refresh_dispay();
-  delay(30);
-  display.print(F("e"));
-  refresh_dispay();
-  delay(30);
-  display.print(F("r"));
-  refresh_dispay();
-  delay(300);
-}
-
-void render_main() {
-  clear_dispay();
-
-  for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
-    display.print(trackTitles[i]);
-    display.print(pageTitles[pageIndex]);
-    display.print(F(": "));
-    display.print(stageTitles[settings.stageLeftIndexes[pageIndex][i]]);
-    display.print(F("| "));
-    render_filled_number(settings.leftMidiValues[pageIndex][i][settings.stageLeftIndexes[pageIndex][i]]);
-    display.print(F("<"));
-    render_filled_number(midiValues[pageIndex][i]);
-    display.print(F(">"));
-    render_filled_number(settings.rightMidiValues[pageIndex][i][settings.stageRightIndexes[pageIndex][i]]);
-    display.print(F(" |"));
-    display.print(stageTitles[settings.stageRightIndexes[pageIndex][i]]);
-    display.print(F("|"));
-    display.println();
-  }
-
-  refresh_dispay();
-}
-
-void render_page_press() {
-  clear_dispay();
-  display.setScale(3);
-  display.print(F("Page:"));
-  display.println(pageTitles[pageIndex]);
-  refresh_dispay();
-}
-
-void render_left_stage_change(int trackIndex) {
-  clear_dispay();
-  display.setScale(2);
-  if (trackIndex >= 0) {
-    display.print(F("Stage L: "));
-    display.println(stageTitles[settings.stageLeftIndexes[pageIndex][trackIndex]]);
-    display.print(F("Track: "));
-    display.println(trackTitles[trackIndex]);
-  } else {
-    display.print(F("Stage L: "));
-    display.println(stageTitles[settings.stageLeftIndexes[pageIndex][0]]);
-    display.println(F("All tracks"));
-  }
-
-  refresh_dispay();
-}
-
-void render_right_stage_change(int trackIndex) {
-  clear_dispay();
-  display.setScale(2);
-  if (trackIndex >= 0) {
-    display.print(F("Stage R: "));
-    display.println(stageTitles[settings.stageRightIndexes[pageIndex][trackIndex]]);
-    display.print(F("Track: "));
-    display.println(trackTitles[trackIndex]);
-  } else {
-    display.print(F("Stage R: "));
-    display.println(stageTitles[settings.stageRightIndexes[pageIndex][0]]);
-    display.println(F("All tracks"));
-  }
-
-  refresh_dispay();
-}
-
-void render_track_press(byte trackIndex) {
-  clear_dispay();
-  display.println(F("Sending MIDI ..."));
-  display.print(F("Page:  "));
-  display.println(pageTitles[pageIndex]);
-  display.print(F("Track: "));
-  display.println(trackTitles[trackIndex]);
-
-  refresh_dispay();
-}
-
-void render_left_midi_value_change(byte trackIndex) {
-  clear_dispay();
-  display.setScale(2);
-
-  display.println(F("Value L:"));
-  display.println(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]);
-  refresh_dispay();
-}
-
-void render_right_midi_value_change(byte trackIndex) {
-  clear_dispay();
-  display.setScale(2);
-
-  display.println(F("Value R:"));
-  display.println(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
-  refresh_dispay();
-}
-
-void render_midi_values_swap(byte trackIndex) {
-  clear_dispay();
-  display.println(F("Swap L and R values:"));
-  display.print(F("Value L: "));
-  display.println(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]);
-  display.print(F("Value R: "));
-  display.println(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
-  display.print(F("Track: "));
-  display.println(trackTitles[trackIndex]);
-  refresh_dispay();
-}
-
-// ===============
-
-// === Menu ===
-
-void render_row_load() {
-  display.println(F("Load Settings"));
-}
-
-void render_row_save() {
-  display.println(F("Save Settings"));
-}
-
-void render_row_midi_channel() {
-  display.print(F("MIDI Channel: "));
-  display.println(settings.midiChannel);
-}
-
-void render_row_fader_threshold() {
-  display.print(F("Fader Threshold: "));
-  display.println(settings.faderThreshold);
-}
-
-void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex) {
-  display.print(F("Track "));
-  display.print(trackTitles[trackIndex]);
-  display.print(pageTitles[pageIndex]);
-  display.print(F(" CC: "));
-  display.println(settings.ccValues[pageIndex][trackIndex]);
-}
-
-void render_row(int8_t row_index) {
-  bool is_selected = row_index == menu_selected_row;
-  if (is_selected) {
-    display.invertText(true);
-  } else {
-    display.invertText(false);
-  }
-
-  switch(row_index) {
-    case MENU_LOAD: return render_row_load();
-    case MENU_SAVE: return render_row_save();
-    case MENU_MIDI_CHANNEL: return render_row_midi_channel();
-    case MENU_FADER_THRESHOLD: return render_row_fader_threshold();
-    case MENU_A1_CC: return render_row_track_cc(0, 0);
-    case MENU_B1_CC: return render_row_track_cc(0, 1);
-    case MENU_C1_CC: return render_row_track_cc(0, 2);
-    case MENU_D1_CC: return render_row_track_cc(0, 3);
-    case MENU_A2_CC: return render_row_track_cc(1, 0);
-    case MENU_B2_CC: return render_row_track_cc(1, 1);
-    case MENU_C2_CC: return render_row_track_cc(1, 2);
-    case MENU_D2_CC: return render_row_track_cc(1, 3);
-    case MENU_A3_CC: return render_row_track_cc(2, 0);
-    case MENU_B3_CC: return render_row_track_cc(2, 1);
-    case MENU_C3_CC: return render_row_track_cc(2, 2);
-    case MENU_D3_CC: return render_row_track_cc(2, 3);
-    case MENU_A4_CC: return render_row_track_cc(3, 0);
-    case MENU_B4_CC: return render_row_track_cc(3, 1);
-    case MENU_C4_CC: return render_row_track_cc(3, 2);
-    case MENU_D4_CC: return render_row_track_cc(3, 3);
-  }
-}
-
-void render_menu() {
-  clear_dispay();
-  display.setCursor(30, 0);
-  display.println(F("=== Menu ==="));
-  display.setCursor(0, 1);
-  for (byte i = 0; i < SCREEN_MENU_ROWS; i++) {
-    if (menu_selected_row < SCREEN_MENU_ROWS) {
-      render_row(i);
-    } else {
-      render_row(menu_selected_row - SCREEN_MENU_ROWS + 1 + i);
-    }
-  }
-  refresh_dispay();
-}
-
-void render_loading() {
-  clear_dispay();
-  display.setScale(2);
-  display.println(F("Loading..."));
-  refresh_dispay();
-}
-
-void render_saving() {
-  clear_dispay();
-  display.setScale(2);
-  display.println(F("Saving..."));
-  refresh_dispay();
-}
-
-// ============
+// ============================
 
 // === Handlers ===
 
-void handle_page_press(byte newPageIndex) {
+void handle_page_press(uint8_t newPageIndex) {
   /*
     only PAGE button pressed:
       - change page index
@@ -387,48 +81,34 @@ void handle_page_press(byte newPageIndex) {
   render_page_press();
 }
 
-void handle_left_stage_change(byte newStageIndex) {
-  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-    if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
-      /*
-        PAGE button and LEFT button and TRACK button are pressed:
-          - change left stage for track on current page
-      */
-        settings.stageLeftIndexes[pageIndex][trackIndex] = newStageIndex;
-        render_left_stage_change(trackIndex);
-        return;
-    }
-  }
-  /*
-    PAGE button and LEFT button pressed:
-      - change left stage for all tracks on current page
-  */
-  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-    settings.stageLeftIndexes[pageIndex][trackIndex] = newStageIndex;
-  }
-  render_left_stage_change(-1);
-}
+void handle_stage_change(int8_t newStageIndex, side_t side) {
+  int8_t trackIndex = get_pressed_track_button();
 
-void handle_right_stage_change(byte newStageIndex) {
-  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-    if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
-      /*
-        PAGE button and RIGHT button and TRACK button are pressed:
-          - change right stage for track on current page
-      */
-        settings.stageRightIndexes[pageIndex][trackIndex] = newStageIndex;
-        render_right_stage_change(trackIndex);
-        return;
+  if (trackIndex >= 0) {
+    /*
+      PAGE button and LEFT/RIGHT button and TRACK button are pressed:
+        - change left/right stage for track on current page
+    */
+    if (side == SIDE_LEFT) {
+      settings.stageLeftIndexes[pageIndex][trackIndex] = newStageIndex;
+    } else {
+      settings.stageRightIndexes[pageIndex][trackIndex] = newStageIndex;
+    }
+  } else {
+    /*
+      PAGE button and LEFT/RIGHT button pressed:
+        - change left/right stage for all tracks on current page
+    */
+    for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
+      if (side == SIDE_LEFT) {
+        settings.stageLeftIndexes[pageIndex][tIndex] = newStageIndex;
+      } else {
+        settings.stageRightIndexes[pageIndex][tIndex] = newStageIndex;
+      }
     }
   }
-  /*
-    PAGE button and RIGHT button pressed:
-      - change right stage for all tracks on current page
-  */
-  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
-    settings.stageRightIndexes[pageIndex][trackIndex] = newStageIndex;
-  }
-  render_right_stage_change(-1);
+
+  render_stage_change(trackIndex, side);
 }
 
 void handle_track_press(byte trackIndex) {
@@ -438,7 +118,7 @@ void handle_track_press(byte trackIndex) {
   */
 
   control_change(settings.midiChannel, settings.ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
-  MidiUSB.flush();
+  send_midi();
   render_track_press(trackIndex);
 
   delay(100);
@@ -461,13 +141,13 @@ void handle_left_midi_value_change(byte trackIndex) {
   */
   uint8_t speed;
 
-  if (encoder.isRight()) {
-      speed = encoder.isFast() ? 5 : encoder.isRightH() ? 10 : 1;
+  if (is_encoder_turned_right()) {
+      speed = is_encoder_turned_fast() ? 5 : 1;
       potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] + speed);
       settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
     }
-    if (encoder.isLeft()) {
-      speed = encoder.isFast() ? 5 : encoder.isLeftH() ? 10 : 1;
+    if (is_encoder_turned_left()) {
+      speed = is_encoder_turned_fast() ? 5 : 1;
       potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] - speed);
       settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
     }
@@ -483,14 +163,14 @@ void handle_right_midi_value_change(byte trackIndex) {
       listen to POT and change right midi value
   */
 
-  if (encoder.isRight()) {
-    speed = encoder.isFast() ? 5 : encoder.isRightH() ? 10 : 1;
+  if (is_encoder_turned_right()) {
+    speed = is_encoder_turned_fast() ? 5 : 1;
 
     potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] + speed);
     settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
   }
-  if (encoder.isLeft()) {
-    speed = encoder.isFast() ? 5 : encoder.isLeftH() ? 10 : 1;
+  if (is_encoder_turned_left()) {
+    speed = is_encoder_turned_fast() ? 5 : 1;
 
     potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] - speed);
     settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
@@ -513,29 +193,29 @@ void handle_midi_values_swap(byte trackIndex) {
 }
 
 void handle_menu() {
-  if (encoder.isRight()) {
+  if (is_encoder_turned_right()) {
     menu_selected_row++;
     if (menu_selected_row >= MAX_MENU_ROWS) {
       menu_selected_row = 0;
     }
   }
 
-  if (encoder.isLeft()) {
+  if (is_encoder_turned_left()) {
     menu_selected_row--;
     if (menu_selected_row < 0) {
       menu_selected_row = MAX_MENU_ROWS - 1;
     }
   }
 
-  if (encoder.isClick()) {
+  if (is_encoder_clicked()) {
     if (menu_selected_row == MENU_LOAD) {
       render_loading();
-      EEPROM.get(STR_ADDR, settings);
+      load_settings(settings);
       delay(300);
     }
     if (menu_selected_row == MENU_SAVE) {
       render_saving();
-      EEPROM.put(STR_ADDR, settings);
+      save_settings(settings);
       delay(300);
     }
   }
@@ -543,12 +223,12 @@ void handle_menu() {
   if (digitalRead(LEFT_PIN) == LOW) {
     if (menu_selected_row == MENU_LOAD) {
       render_loading();
-      EEPROM.get(STR_ADDR, settings);
+      load_settings(settings);
       delay(300);
     }
     if (menu_selected_row == MENU_SAVE) {
       render_saving();
-      EEPROM.put(STR_ADDR, settings);
+      save_settings(settings);
       delay(300);
     }
     if (menu_selected_row == MENU_MIDI_CHANNEL) {
@@ -615,12 +295,12 @@ void handle_menu() {
   if (digitalRead(RIGHT_PIN) == LOW) {
     if (menu_selected_row == MENU_LOAD) {
       render_loading();
-      EEPROM.get(STR_ADDR, settings);
+      load_settings(settings);
       delay(300);
     }
     if (menu_selected_row == MENU_SAVE) {
       render_saving();
-      EEPROM.put(STR_ADDR, settings);
+      save_settings(settings);
       delay(300);
     }
     if (menu_selected_row == MENU_MIDI_CHANNEL) {
@@ -689,10 +369,6 @@ void handle_menu() {
 
 // ================
 
-void isr() {
-  encoder.tickISR();
-}
-
 void setup() {
   Serial.begin(9600);
 
@@ -712,24 +388,20 @@ void setup() {
     pinMode(PAGE_PINS[i], INPUT_PULLUP);
   }
 
-  display.init();
-  render_init();
-  clear_dispay();
-
-  attachInterrupt(2, isr, CHANGE);
-  attachInterrupt(3, isr, CHANGE);
+  init_display();
+  init_encoder();
 }
 
 void loop() {
-  encoder.tick();
+  encoder_tick();
 
   for (byte pIndex = 0; pIndex < NUMBER_OF_PAGES; pIndex++) {
     if (digitalRead(PAGE_PINS[pIndex]) == LOW) {
       if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_left_stage_change(pIndex);
+        handle_stage_change(pIndex, SIDE_LEFT);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        handle_right_stage_change(pIndex);
+        handle_stage_change(pIndex, SIDE_RIGHT);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == HIGH) {
         handle_page_press(pIndex);
@@ -773,11 +445,11 @@ void loop() {
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
       control_change(settings.midiChannel, settings.ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
       previousMidiValues[pageIndex][trackIndex] = midiValues[pageIndex][trackIndex];
-      MidiUSB.flush();
+      send_midi();
     }
   }
   
-  if (!isMenuMode && encoder.isClick()) {
+  if (!isMenuMode && is_encoder_clicked()) {
     isMenuMode = true;
   }
 
