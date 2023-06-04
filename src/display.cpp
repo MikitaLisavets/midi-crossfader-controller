@@ -124,21 +124,18 @@ void render_track_press(int8_t trackIndex) {
   refresh_dispay();
 }
 
-void render_left_midi_value_change(int8_t trackIndex) {
+void render_midi_value_change(int8_t trackIndex, side_t side) {
   clear_dispay();
   display.setScale(2);
 
-  display.println(F("Value L:"));
-  display.println(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]);
-  refresh_dispay();
-}
+  if (side == SIDE_LEFT) {
+    display.println(F("Value L:"));
+    display.println(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]]);
+  } else {
+    display.println(F("Value R:"));
+    display.println(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
+  }
 
-void render_right_midi_value_change(int8_t trackIndex) {
-  clear_dispay();
-  display.setScale(2);
-
-  display.println(F("Value R:"));
-  display.println(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]]);
   refresh_dispay();
 }
 

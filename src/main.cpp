@@ -134,49 +134,35 @@ uint8_t safe_midi_value(int16_t unsafe_midi_value) {
   }
 }
 
-void handle_left_midi_value_change(byte trackIndex) {
+void handle_midi_value_change(int8_t trackIndex, side_t side) {
   /*
-    TRACK button and LEFT button pressed:
-      listen to POT and change left midi value
+    TRACK button and LEFT/RIGHT button pressed:
+      listen to POT and change left/right midi value
   */
-  uint8_t speed;
-
-  if (is_encoder_turned_right()) {
-      speed = is_encoder_turned_fast() ? 5 : 1;
-      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] + speed);
-      settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
-    }
-    if (is_encoder_turned_left()) {
-      speed = is_encoder_turned_fast() ? 5 : 1;
-      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] - speed);
-      settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
-    }
-
-    render_left_midi_value_change(trackIndex);
-
-}
-
-void handle_right_midi_value_change(byte trackIndex) {
-  uint8_t speed;
-  /*
-    TRACK button and RIGHT button pressed:
-      listen to POT and change right midi value
-  */
+  int8_t speed;
 
   if (is_encoder_turned_right()) {
     speed = is_encoder_turned_fast() ? 5 : 1;
-
-    potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] + speed);
-    settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
+    if (side == SIDE_LEFT) {
+      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] + speed);
+      settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
+    } else {
+      potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] + speed);
+      settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
+    }
   }
   if (is_encoder_turned_left()) {
     speed = is_encoder_turned_fast() ? 5 : 1;
-
-    potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] - speed);
-    settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
+    if (side == SIDE_LEFT) {
+      potValue = safe_midi_value(settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] - speed);
+      settings.leftMidiValues[pageIndex][trackIndex][settings.stageLeftIndexes[pageIndex][trackIndex]] = potValue;
+    } else {
+      potValue = safe_midi_value(settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] - speed);
+      settings.rightMidiValues[pageIndex][trackIndex][settings.stageRightIndexes[pageIndex][trackIndex]] = potValue;
+    }
   }
 
-  render_right_midi_value_change(trackIndex);
+  render_midi_value_change(trackIndex, side);
 }
 
 void handle_midi_values_swap(byte trackIndex) {
@@ -413,10 +399,10 @@ void loop() {
   for (int tIndex = 0; tIndex < NUMBER_OF_TRACKS; tIndex++) {
     if (digitalRead(TRACK_PINS[tIndex]) == LOW) {
       if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == HIGH) {
-        handle_left_midi_value_change(tIndex);
+        handle_midi_value_change(tIndex, SIDE_LEFT);
         return;
       } else if (digitalRead(LEFT_PIN) == HIGH && digitalRead(RIGHT_PIN) == LOW) {
-        handle_right_midi_value_change(tIndex);
+        handle_midi_value_change(tIndex, SIDE_RIGHT);
         return;
       }  else if (digitalRead(LEFT_PIN) == LOW && digitalRead(RIGHT_PIN) == LOW) {
         handle_midi_values_swap(tIndex);
