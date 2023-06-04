@@ -52,7 +52,8 @@ Settings settings = {
     {5, 6, 7, 8},
     {9, 10, 11, 12},
     {13, 14, 15, 16}
-  }
+  },
+  .autoLoadSettings = false,
 };
 
 uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
@@ -172,6 +173,9 @@ void handle_menu() {
       if (menuSelectedRow == MENU_FADER_THRESHOLD) {
         settings.faderThreshold = safe_midi_value(settings.faderThreshold + 1);
       }
+      if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
+        settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
+      }
       if (menuSelectedRow == MENU_A1_CC) {
         settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] + 1);
       }
@@ -235,6 +239,9 @@ void handle_menu() {
       }
       if (menuSelectedRow == MENU_FADER_THRESHOLD) {
         settings.faderThreshold = safe_midi_value(settings.faderThreshold - 1);
+      }
+      if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
+        settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
       }
       if (menuSelectedRow == MENU_A1_CC) {
         settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] - 1);
@@ -336,8 +343,6 @@ void handle_menu() {
 // ================
 
 void setup() {
-  Serial.begin(9600);
-
   // Turn off system leds
   pinMode(LED_BUILTIN_TX, INPUT);
   pinMode(LED_BUILTIN_RX, INPUT);
@@ -352,6 +357,12 @@ void setup() {
 
   for (int i = 0; i < NUMBER_OF_PAGES; i++) {
     pinMode(PAGE_PINS[i], INPUT_PULLUP);
+  }
+
+  Settings initSettings;
+  load_settings(initSettings);
+  if (initSettings.autoLoadSettings) {
+    load_settings(settings);
   }
 
   init_display();

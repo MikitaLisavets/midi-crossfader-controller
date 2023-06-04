@@ -33,24 +33,25 @@ extern int8_t menuSelectedRow;
 enum menu_t : uint8_t {
   MENU_LOAD = 0,
   MENU_SAVE = 1,
-  MENU_MIDI_CHANNEL = 2,
-  MENU_FADER_THRESHOLD = 3,
-  MENU_A1_CC = 4,
-  MENU_B1_CC = 5,
-  MENU_C1_CC = 6,
-  MENU_D1_CC = 7,
-  MENU_A2_CC = 8,
-  MENU_B2_CC = 9,
-  MENU_C2_CC = 10,
-  MENU_D2_CC = 11,
-  MENU_A3_CC = 12,
-  MENU_B3_CC = 13,
-  MENU_C3_CC = 14,
-  MENU_D3_CC = 15,
-  MENU_A4_CC = 16,
-  MENU_B4_CC = 17,
-  MENU_C4_CC = 18,
-  MENU_D4_CC = 19,
+  MENU_AUTO_LOAD_SETTINGS = 2,
+  MENU_MIDI_CHANNEL = 3,
+  MENU_FADER_THRESHOLD = 4,
+  MENU_A1_CC = 5,
+  MENU_B1_CC = 6,
+  MENU_C1_CC = 7,
+  MENU_D1_CC = 8,
+  MENU_A2_CC = 9,
+  MENU_B2_CC = 10,
+  MENU_C2_CC = 11,
+  MENU_D2_CC = 12,
+  MENU_A3_CC = 13,
+  MENU_B3_CC = 14,
+  MENU_C3_CC = 15,
+  MENU_D3_CC = 16,
+  MENU_A4_CC = 17,
+  MENU_B4_CC = 18,
+  MENU_C4_CC = 19,
+  MENU_D4_CC = 20,
 };
 
 enum side_t : int8_t {
@@ -64,6 +65,7 @@ struct Settings {
   uint8_t stageIndexes[NUMBER_OF_SIDES][NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
   uint8_t midiValues[NUMBER_OF_SIDES][NUMBER_OF_PAGES][NUMBER_OF_TRACKS][NUMBER_OF_STAGES];
   uint8_t ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
+  bool autoLoadSettings;
 };
 
 extern Settings settings;

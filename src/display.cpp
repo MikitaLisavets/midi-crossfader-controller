@@ -179,6 +179,18 @@ void render_row_fader_threshold(bool hasActiveSubMenu) {
   display.println(settings.faderThreshold);
 }
 
+void render_row_auto_load_settings(bool hasActiveSubMenu) {
+  display.print(F("Auto-Load: "));
+  if (hasActiveSubMenu) {
+    display.invertText(true);
+  }
+  if (settings.autoLoadSettings) {
+    display.println(F("Yes"));
+  } else {
+    display.println(F("No"));
+  }
+}
+
 void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex, bool hasActiveSubMenu) {
   display.print(F("Track "));
   display.print(trackTitles[trackIndex]);
@@ -204,6 +216,7 @@ void render_row(int8_t rowIndex) {
     case MENU_SAVE: return render_row_save();
     case MENU_MIDI_CHANNEL: return render_row_midi_channel(hasActiveSubMenu);
     case MENU_FADER_THRESHOLD: return render_row_fader_threshold(hasActiveSubMenu);
+    case MENU_AUTO_LOAD_SETTINGS: return render_row_auto_load_settings(hasActiveSubMenu);
     case MENU_A1_CC: return render_row_track_cc(0, 0, hasActiveSubMenu);
     case MENU_B1_CC: return render_row_track_cc(0, 1, hasActiveSubMenu);
     case MENU_C1_CC: return render_row_track_cc(0, 2, hasActiveSubMenu);
