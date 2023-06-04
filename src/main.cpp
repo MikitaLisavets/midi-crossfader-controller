@@ -9,14 +9,12 @@ uint8_t TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
 uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {8, 9, 10, 16};
 
 bool isMenuMode = false;
+bool isSubMenuActive = false;
+
 uint8_t pageIndex = 0;
 int16_t potValue;
 int16_t faderValue = 0;
-int8_t menu_selected_row = 0;
-
-char stageTitles[] = { '1', '2', '3', '4' };
-char trackTitles[] = { 'A', 'B', 'C', 'D' };
-char pageTitles[] = { '1', '2', '3', '4' };
+int8_t menuSelectedRow = 0;
 
 Settings settings = {
   .midiChannel = 0,
@@ -163,177 +161,175 @@ void handle_midi_values_swap(byte trackIndex) {
 }
 
 void handle_menu() {
+  int8_t pIndex = get_pressed_page_button();
+  int8_t tIndex = get_pressed_track_button();
+
   if (is_encoder_turned_right()) {
-    menu_selected_row++;
-    if (menu_selected_row >= MAX_MENU_ROWS) {
-      menu_selected_row = 0;
+    if (isSubMenuActive) {
+      if (menuSelectedRow == MENU_MIDI_CHANNEL) {
+        settings.midiChannel = safe_midi_value(settings.midiChannel + 1);
+      }
+      if (menuSelectedRow == MENU_FADER_THRESHOLD) {
+        settings.faderThreshold = safe_midi_value(settings.faderThreshold + 1);
+      }
+      if (menuSelectedRow == MENU_A1_CC) {
+        settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] + 1);
+      }
+      if (menuSelectedRow == MENU_B1_CC) {
+        settings.ccValues[0][1] = safe_midi_value(settings.ccValues[0][1] + 1);
+      }
+      if (menuSelectedRow == MENU_C1_CC) {
+        settings.ccValues[0][2] = safe_midi_value(settings.ccValues[0][2] + 1);
+      }
+      if (menuSelectedRow == MENU_D1_CC) {
+        settings.ccValues[0][3] = safe_midi_value(settings.ccValues[0][3] + 1);
+      }
+      if (menuSelectedRow == MENU_A2_CC) {
+        settings.ccValues[1][0] = safe_midi_value(settings.ccValues[1][0] + 1);
+      }
+      if (menuSelectedRow == MENU_B2_CC) {
+        settings.ccValues[1][1] = safe_midi_value(settings.ccValues[1][1] + 1);
+      }
+      if (menuSelectedRow == MENU_C2_CC) {
+        settings.ccValues[1][2] = safe_midi_value(settings.ccValues[1][2] + 1);
+      }
+      if (menuSelectedRow == MENU_D2_CC) {
+        settings.ccValues[1][3] = safe_midi_value(settings.ccValues[1][3] + 1);
+      }
+      if (menuSelectedRow == MENU_A3_CC) {
+        settings.ccValues[2][0] = safe_midi_value(settings.ccValues[2][0] + 1);
+      }
+      if (menuSelectedRow == MENU_B3_CC) {
+        settings.ccValues[2][1] = safe_midi_value(settings.ccValues[2][1] + 1);
+      }
+      if (menuSelectedRow == MENU_C3_CC) {
+        settings.ccValues[2][2] = safe_midi_value(settings.ccValues[2][2] + 1);
+      }
+      if (menuSelectedRow == MENU_D3_CC) {
+        settings.ccValues[2][3] = safe_midi_value(settings.ccValues[2][3] + 1);
+      }
+      if (menuSelectedRow == MENU_A4_CC) {
+        settings.ccValues[3][0] = safe_midi_value(settings.ccValues[3][0] + 1);
+      }
+      if (menuSelectedRow == MENU_B4_CC) {
+        settings.ccValues[3][1] = safe_midi_value(settings.ccValues[3][1] + 1);
+      }
+      if (menuSelectedRow == MENU_C4_CC) {
+        settings.ccValues[3][2] = safe_midi_value(settings.ccValues[3][2] + 1);
+      }
+      if (menuSelectedRow == MENU_D4_CC) {
+        settings.ccValues[3][3] = safe_midi_value(settings.ccValues[3][3] + 1);
+      }
+    } else {
+      menuSelectedRow++;
+      if (menuSelectedRow >= MAX_MENU_ROWS) {
+        menuSelectedRow = 0;
+      }
     }
   }
 
   if (is_encoder_turned_left()) {
-    menu_selected_row--;
-    if (menu_selected_row < 0) {
-      menu_selected_row = MAX_MENU_ROWS - 1;
+    if (isSubMenuActive) {
+      if (menuSelectedRow == MENU_MIDI_CHANNEL) {
+        settings.midiChannel = safe_midi_value(settings.midiChannel - 1);
+      }
+      if (menuSelectedRow == MENU_FADER_THRESHOLD) {
+        settings.faderThreshold = safe_midi_value(settings.faderThreshold - 1);
+      }
+      if (menuSelectedRow == MENU_A1_CC) {
+        settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] - 1);
+      }
+      if (menuSelectedRow == MENU_B1_CC) {
+        settings.ccValues[0][1] = safe_midi_value(settings.ccValues[0][1] - 1);
+      }
+      if (menuSelectedRow == MENU_C1_CC) {
+        settings.ccValues[0][2] = safe_midi_value(settings.ccValues[0][2] - 1);
+      }
+      if (menuSelectedRow == MENU_D1_CC) {
+        settings.ccValues[0][3] = safe_midi_value(settings.ccValues[0][3] - 1);
+      }
+      if (menuSelectedRow == MENU_A2_CC) {
+        settings.ccValues[1][0] = safe_midi_value(settings.ccValues[1][0] - 1);
+      }
+      if (menuSelectedRow == MENU_B2_CC) {
+        settings.ccValues[1][1] = safe_midi_value(settings.ccValues[1][1] - 1);
+      }
+      if (menuSelectedRow == MENU_C2_CC) {
+        settings.ccValues[1][2] = safe_midi_value(settings.ccValues[1][2] - 1);
+      }
+      if (menuSelectedRow == MENU_D2_CC) {
+        settings.ccValues[1][3] = safe_midi_value(settings.ccValues[1][3] - 1);
+      }
+      if (menuSelectedRow == MENU_A3_CC) {
+        settings.ccValues[2][0] = safe_midi_value(settings.ccValues[2][0] - 1);
+      }
+      if (menuSelectedRow == MENU_B3_CC) {
+        settings.ccValues[2][1] = safe_midi_value(settings.ccValues[2][1] - 1);
+      }
+      if (menuSelectedRow == MENU_C3_CC) {
+        settings.ccValues[2][2] = safe_midi_value(settings.ccValues[2][2] - 1);
+      }
+      if (menuSelectedRow == MENU_D3_CC) {
+        settings.ccValues[2][3] = safe_midi_value(settings.ccValues[2][3] - 1);
+      }
+      if (menuSelectedRow == MENU_A4_CC) {
+        settings.ccValues[3][0] = safe_midi_value(settings.ccValues[3][0] - 1);
+      }
+      if (menuSelectedRow == MENU_B4_CC) {
+        settings.ccValues[3][1] = safe_midi_value(settings.ccValues[3][1] - 1);
+      }
+      if (menuSelectedRow == MENU_C4_CC) {
+        settings.ccValues[3][2] = safe_midi_value(settings.ccValues[3][2] - 1);
+      }
+      if (menuSelectedRow == MENU_D4_CC) {
+        settings.ccValues[3][3] = safe_midi_value(settings.ccValues[3][3] - 1);
+      }
+
+    } else {
+      menuSelectedRow--;
+      if (menuSelectedRow < 0) {
+        menuSelectedRow = MAX_MENU_ROWS - 1;
+      }
     }
   }
 
-  if (is_encoder_clicked()) {
-    if (menu_selected_row == MENU_LOAD) {
+  if (is_encoder_clicked() || is_right_button_pressed()) {
+    if (menuSelectedRow == MENU_LOAD) {
       render_loading();
       load_settings(settings);
-      delay(300);
-    }
-    if (menu_selected_row == MENU_SAVE) {
+    } else if (menuSelectedRow == MENU_SAVE) {
       render_saving();
       save_settings(settings);
-      delay(300);
+    } else if (isSubMenuActive) {
+      isSubMenuActive = false;
+      render_menu();
+    } else {
+      isSubMenuActive = true;
+      render_menu();
     }
+    delay(300);
   }
 
   if (is_left_button_pressed()) {
-    if (menu_selected_row == MENU_LOAD) {
-      render_loading();
-      load_settings(settings);
+    if (isSubMenuActive) {
+      isSubMenuActive = false;
+      render_menu();
       delay(300);
+    } else {
+      isMenuMode = false;
+      menuSelectedRow = 0;
     }
-    if (menu_selected_row == MENU_SAVE) {
-      render_saving();
-      save_settings(settings);
-      delay(300);
-    }
-    if (menu_selected_row == MENU_MIDI_CHANNEL) {
-      settings.midiChannel = safe_midi_value(settings.midiChannel - 1);
-    }
-    if (menu_selected_row == MENU_FADER_THRESHOLD) {
-      int16_t newValue = settings.faderThreshold - 1;
-      if (newValue < 0) {
-        newValue = 0;
-      }
-      settings.faderThreshold = newValue;
-    }
-    if (menu_selected_row == MENU_A1_CC) {
-      settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] - 1);
-    }
-    if (menu_selected_row == MENU_B1_CC) {
-      settings.ccValues[0][1] = safe_midi_value(settings.ccValues[0][1] - 1);
-    }
-    if (menu_selected_row == MENU_C1_CC) {
-      settings.ccValues[0][2] = safe_midi_value(settings.ccValues[0][2] - 1);
-    }
-    if (menu_selected_row == MENU_D1_CC) {
-      settings.ccValues[0][3] = safe_midi_value(settings.ccValues[0][3] - 1);
-    }
-    if (menu_selected_row == MENU_A2_CC) {
-      settings.ccValues[1][0] = safe_midi_value(settings.ccValues[1][0] - 1);
-    }
-    if (menu_selected_row == MENU_B2_CC) {
-      settings.ccValues[1][1] = safe_midi_value(settings.ccValues[1][1] - 1);
-    }
-    if (menu_selected_row == MENU_C2_CC) {
-      settings.ccValues[1][2] = safe_midi_value(settings.ccValues[1][2] - 1);
-    }
-    if (menu_selected_row == MENU_D2_CC) {
-      settings.ccValues[1][3] = safe_midi_value(settings.ccValues[1][3] - 1);
-    }
-    if (menu_selected_row == MENU_A3_CC) {
-      settings.ccValues[2][0] = safe_midi_value(settings.ccValues[2][0] - 1);
-    }
-    if (menu_selected_row == MENU_B3_CC) {
-      settings.ccValues[2][1] = safe_midi_value(settings.ccValues[2][1] - 1);
-    }
-    if (menu_selected_row == MENU_C3_CC) {
-      settings.ccValues[2][2] = safe_midi_value(settings.ccValues[2][2] - 1);
-    }
-    if (menu_selected_row == MENU_D3_CC) {
-      settings.ccValues[2][3] = safe_midi_value(settings.ccValues[2][3] - 1);
-    }
-    if (menu_selected_row == MENU_A4_CC) {
-      settings.ccValues[3][0] = safe_midi_value(settings.ccValues[3][0] - 1);
-    }
-    if (menu_selected_row == MENU_B4_CC) {
-      settings.ccValues[3][1] = safe_midi_value(settings.ccValues[3][1] - 1);
-    }
-    if (menu_selected_row == MENU_C4_CC) {
-      settings.ccValues[3][2] = safe_midi_value(settings.ccValues[3][2] - 1);
-    }
-    if (menu_selected_row == MENU_D4_CC) {
-      settings.ccValues[3][3] = safe_midi_value(settings.ccValues[3][3] - 1);
-    }
-    delay(150);
+    return;
   }
 
-  if (is_right_button_pressed()) {
-    if (menu_selected_row == MENU_LOAD) {
-      render_loading();
-      load_settings(settings);
-      delay(300);
-    }
-    if (menu_selected_row == MENU_SAVE) {
-      render_saving();
-      save_settings(settings);
-      delay(300);
-    }
-    if (menu_selected_row == MENU_MIDI_CHANNEL) {
-      settings.midiChannel = safe_midi_value(settings.midiChannel + 1);
-    }
-    if (menu_selected_row == MENU_FADER_THRESHOLD) {
-      int16_t newValue = settings.faderThreshold + 1;
-      if (newValue > 1023) {
-        newValue = 1023;
-      }
-      settings.faderThreshold = newValue;
-    }
-    if (menu_selected_row == MENU_A1_CC) {
-      settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] + 1);
-    }
-    if (menu_selected_row == MENU_B1_CC) {
-      settings.ccValues[0][1] = safe_midi_value(settings.ccValues[0][1] + 1);
-    }
-    if (menu_selected_row == MENU_C1_CC) {
-      settings.ccValues[0][2] = safe_midi_value(settings.ccValues[0][2] + 1);
-    }
-    if (menu_selected_row == MENU_D1_CC) {
-      settings.ccValues[0][3] = safe_midi_value(settings.ccValues[0][3] + 1);
-    }
-    if (menu_selected_row == MENU_A2_CC) {
-      settings.ccValues[1][0] = safe_midi_value(settings.ccValues[1][0] + 1);
-    }
-    if (menu_selected_row == MENU_B2_CC) {
-      settings.ccValues[1][1] = safe_midi_value(settings.ccValues[1][1] + 1);
-    }
-    if (menu_selected_row == MENU_C2_CC) {
-      settings.ccValues[1][2] = safe_midi_value(settings.ccValues[1][2] + 1);
-    }
-    if (menu_selected_row == MENU_D2_CC) {
-      settings.ccValues[1][3] = safe_midi_value(settings.ccValues[1][3] + 1);
-    }
-    if (menu_selected_row == MENU_A3_CC) {
-      settings.ccValues[2][0] = safe_midi_value(settings.ccValues[2][0] + 1);
-    }
-    if (menu_selected_row == MENU_B3_CC) {
-      settings.ccValues[2][1] = safe_midi_value(settings.ccValues[2][1] + 1);
-    }
-    if (menu_selected_row == MENU_C3_CC) {
-      settings.ccValues[2][2] = safe_midi_value(settings.ccValues[2][2] + 1);
-    }
-    if (menu_selected_row == MENU_D3_CC) {
-      settings.ccValues[2][3] = safe_midi_value(settings.ccValues[2][3] + 1);
-    }
-    if (menu_selected_row == MENU_A4_CC) {
-      settings.ccValues[3][0] = safe_midi_value(settings.ccValues[3][0] + 1);
-    }
-    if (menu_selected_row == MENU_B4_CC) {
-      settings.ccValues[3][1] = safe_midi_value(settings.ccValues[3][1] + 1);
-    }
-    if (menu_selected_row == MENU_C4_CC) {
-      settings.ccValues[3][2] = safe_midi_value(settings.ccValues[3][2] + 1);
-    }
-    if (menu_selected_row == MENU_D4_CC) {
-      settings.ccValues[3][3] = safe_midi_value(settings.ccValues[3][3] + 1);
-    }
-    delay(150);
+
+  if (is_button_pressed(pIndex) || is_button_pressed(tIndex)) {
+    isSubMenuActive = false;
+    isMenuMode = false;
+    menuSelectedRow = 0;
+    return;
   }
-  
+
   render_menu();
 }
 
@@ -365,8 +361,17 @@ void setup() {
 void loop() {
   encoder_tick();
 
+  if (!isMenuMode && is_encoder_clicked()) {
+    isMenuMode = true;
+  }
+
   int8_t pIndex = get_pressed_page_button();
   int8_t tIndex = get_pressed_track_button();
+
+  if (isMenuMode) {
+    handle_menu();
+    return;
+  }
 
   if (is_left_button_pressed() && is_right_button_pressed()) {
     if (is_button_pressed(tIndex)) {
@@ -424,20 +429,7 @@ void loop() {
       send_midi();
     }
   }
-  
-  if (!isMenuMode && is_encoder_clicked()) {
-    isMenuMode = true;
-  }
 
-  if (isMenuMode) {
-    handle_menu();
-    if (is_button_pressed(pIndex) || is_button_pressed(tIndex)) {
-      isMenuMode = false;
-      menu_selected_row = 0;
-      delay(100);
-    }
-  } else {
-    render_main();
-  }
+  render_main();
 }
 

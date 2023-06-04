@@ -19,8 +19,8 @@ void isr() {
 }
 
 void init_encoder() {
-  attachInterrupt(2, isr, CHANGE);
-  attachInterrupt(3, isr, CHANGE);
+  attachInterrupt(2, isr, CHANGE); // Interrupt pin (INT2) arduino pro micro D1 TX()
+  attachInterrupt(3, isr, CHANGE); // Interrupt pin (INT3) arduino pro micro D0 (RX)
 }
 
 void encoder_tick() {
@@ -41,6 +41,10 @@ bool is_encoder_turned_fast() {
 
 bool is_encoder_clicked() {
   return encoder.isClick();
+}
+
+bool is_encoder_hold() {
+  return encoder.isHold();
 }
 
 bool is_left_button_pressed() {

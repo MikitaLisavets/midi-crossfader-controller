@@ -1,9 +1,12 @@
 #include <SPI.h>
 #include <GyverOLED.h> // Source: https://github.com/GyverLibs/GyverOLED
-
 #include <display.h>
 
 GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
+
+char trackTitles[4] = { 'A', 'B', 'C', 'D' };
+char pageTitles[4] = { '1', '2', '3', '4' };
+char stageTitles[4] = { '1', '2', '3', '4' };
 
 void clear_dispay() {
   display.clear();
@@ -97,7 +100,8 @@ void render_stage_change(int8_t trackIndex, side_t side) {
     }
     display.println(stageTitles[settings.stageIndexes[side][pageIndex][trackIndex]]);
     display.print(F("Track: "));
-    display.println(trackTitles[trackIndex]);
+    display.print(trackTitles[trackIndex]);
+    display.println(pageTitles[pageIndex]);
   } else {
     if (side == SIDE_LEFT) {
       display.print(F("Stage L: "));
@@ -113,12 +117,11 @@ void render_stage_change(int8_t trackIndex, side_t side) {
 
 void render_track_press(int8_t trackIndex) {
   clear_dispay();
-  display.println(F("Sending MIDI ..."));
-  display.print(F("Page:  "));
-  display.println(pageTitles[pageIndex]);
+  display.setScale(2);
+  display.println(F("Sending ..."));
   display.print(F("Track: "));
-  display.println(trackTitles[trackIndex]);
-
+  display.print(trackTitles[trackIndex]);
+  display.println(pageTitles[pageIndex]);
   refresh_dispay();
 }
 
@@ -159,53 +162,64 @@ void render_row_save() {
   display.println(F("Save Settings"));
 }
 
-void render_row_midi_channel() {
+void render_row_midi_channel(bool hasActiveSubMenu) {
   display.print(F("MIDI Channel: "));
+  if (hasActiveSubMenu) {
+    display.invertText(true);
+  }
   display.println(settings.midiChannel);
+
 }
 
-void render_row_fader_threshold() {
+void render_row_fader_threshold(bool hasActiveSubMenu) {
   display.print(F("Fader Threshold: "));
+  if (hasActiveSubMenu) {
+    display.invertText(true);
+  }
   display.println(settings.faderThreshold);
 }
 
-void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex) {
+void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex, bool hasActiveSubMenu) {
   display.print(F("Track "));
   display.print(trackTitles[trackIndex]);
   display.print(pageTitles[pageIndex]);
   display.print(F(" CC: "));
+  if (hasActiveSubMenu) {
+    display.invertText(true);
+  }
   display.println(settings.ccValues[pageIndex][trackIndex]);
 }
 
-void render_row(int8_t row_index) {
-  bool is_selected = row_index == menu_selected_row;
-  if (is_selected) {
+void render_row(int8_t rowIndex) {
+  bool isSelected = rowIndex == menuSelectedRow;
+  bool hasActiveSubMenu = isSelected && isSubMenuActive;
+  if (isSelected && !hasActiveSubMenu) {
     display.invertText(true);
   } else {
     display.invertText(false);
   }
 
-  switch(row_index) {
+  switch(rowIndex) {
     case MENU_LOAD: return render_row_load();
     case MENU_SAVE: return render_row_save();
-    case MENU_MIDI_CHANNEL: return render_row_midi_channel();
-    case MENU_FADER_THRESHOLD: return render_row_fader_threshold();
-    case MENU_A1_CC: return render_row_track_cc(0, 0);
-    case MENU_B1_CC: return render_row_track_cc(0, 1);
-    case MENU_C1_CC: return render_row_track_cc(0, 2);
-    case MENU_D1_CC: return render_row_track_cc(0, 3);
-    case MENU_A2_CC: return render_row_track_cc(1, 0);
-    case MENU_B2_CC: return render_row_track_cc(1, 1);
-    case MENU_C2_CC: return render_row_track_cc(1, 2);
-    case MENU_D2_CC: return render_row_track_cc(1, 3);
-    case MENU_A3_CC: return render_row_track_cc(2, 0);
-    case MENU_B3_CC: return render_row_track_cc(2, 1);
-    case MENU_C3_CC: return render_row_track_cc(2, 2);
-    case MENU_D3_CC: return render_row_track_cc(2, 3);
-    case MENU_A4_CC: return render_row_track_cc(3, 0);
-    case MENU_B4_CC: return render_row_track_cc(3, 1);
-    case MENU_C4_CC: return render_row_track_cc(3, 2);
-    case MENU_D4_CC: return render_row_track_cc(3, 3);
+    case MENU_MIDI_CHANNEL: return render_row_midi_channel(hasActiveSubMenu);
+    case MENU_FADER_THRESHOLD: return render_row_fader_threshold(hasActiveSubMenu);
+    case MENU_A1_CC: return render_row_track_cc(0, 0, hasActiveSubMenu);
+    case MENU_B1_CC: return render_row_track_cc(0, 1, hasActiveSubMenu);
+    case MENU_C1_CC: return render_row_track_cc(0, 2, hasActiveSubMenu);
+    case MENU_D1_CC: return render_row_track_cc(0, 3, hasActiveSubMenu);
+    case MENU_A2_CC: return render_row_track_cc(1, 0, hasActiveSubMenu);
+    case MENU_B2_CC: return render_row_track_cc(1, 1, hasActiveSubMenu);
+    case MENU_C2_CC: return render_row_track_cc(1, 2, hasActiveSubMenu);
+    case MENU_D2_CC: return render_row_track_cc(1, 3, hasActiveSubMenu);
+    case MENU_A3_CC: return render_row_track_cc(2, 0, hasActiveSubMenu);
+    case MENU_B3_CC: return render_row_track_cc(2, 1, hasActiveSubMenu);
+    case MENU_C3_CC: return render_row_track_cc(2, 2, hasActiveSubMenu);
+    case MENU_D3_CC: return render_row_track_cc(2, 3, hasActiveSubMenu);
+    case MENU_A4_CC: return render_row_track_cc(3, 0, hasActiveSubMenu);
+    case MENU_B4_CC: return render_row_track_cc(3, 1, hasActiveSubMenu);
+    case MENU_C4_CC: return render_row_track_cc(3, 2, hasActiveSubMenu);
+    case MENU_D4_CC: return render_row_track_cc(3, 3, hasActiveSubMenu);
   }
 }
 
@@ -215,10 +229,10 @@ void render_menu() {
   display.println(F("=== Menu ==="));
   display.setCursor(0, 1);
   for (byte i = 0; i < SCREEN_MENU_ROWS; i++) {
-    if (menu_selected_row < SCREEN_MENU_ROWS) {
+    if (menuSelectedRow < SCREEN_MENU_ROWS) {
       render_row(i);
     } else {
-      render_row(menu_selected_row - SCREEN_MENU_ROWS + 1 + i);
+      render_row(menuSelectedRow - SCREEN_MENU_ROWS + 1 + i);
     }
   }
   refresh_dispay();

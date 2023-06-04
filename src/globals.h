@@ -24,10 +24,11 @@ extern uint8_t TRACK_PINS[NUMBER_OF_TRACKS];
 extern uint8_t PAGE_PINS[NUMBER_OF_PAGES];
 
 extern bool isMenuMode;
+extern bool isSubMenuActive;
 extern uint8_t pageIndex;
 extern int16_t potValue;
 extern int16_t faderValue;
-extern int8_t menu_selected_row;
+extern int8_t menuSelectedRow;
 
 enum menu_t : uint8_t {
   MENU_LOAD = 0,
@@ -56,10 +57,6 @@ enum side_t : int8_t {
   SIDE_LEFT = 0,
   SIDE_RIGHT = 1,
 };
-
-extern char stageTitles[];
-extern char trackTitles[];
-extern char pageTitles[];
 
 struct Settings {
   uint8_t midiChannel;
