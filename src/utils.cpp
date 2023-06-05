@@ -76,3 +76,13 @@ int8_t get_pressed_page_button() {
   }
   return -1;
 }
+
+uint8_t safe_midi_value(int16_t unsafe_midi_value) {
+  if (unsafe_midi_value > 127) {
+    return 127;
+  } else if (unsafe_midi_value < 0) {
+    return 0;
+  } else {
+    return unsafe_midi_value;
+  }
+}

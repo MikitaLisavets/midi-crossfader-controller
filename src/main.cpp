@@ -119,30 +119,18 @@ void handle_track_press(byte trackIndex) {
   delay(100);
 }
 
-uint8_t safe_midi_value(int16_t unsafe_midi_value) {
-  if (unsafe_midi_value > 127) {
-    return 127;
-  } else if (unsafe_midi_value < 0) {
-    return 0;
-  } else {
-    return unsafe_midi_value;
-  }
-}
-
 void handle_midi_value_change(int8_t trackIndex, side_t side) {
   /*
     TRACK button and LEFT/RIGHT button pressed:
       listen to POT and change left/right midi value
   */
-  int8_t speed;
+  int8_t speed = is_encoder_turned_fast() ? 5 : 1;
 
   if (is_encoder_turned_right()) {
-    speed = is_encoder_turned_fast() ? 5 : 1;
     potValue = safe_midi_value(settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] + speed);
     settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] = potValue;
   }
   if (is_encoder_turned_left()) {
-    speed = is_encoder_turned_fast() ? 5 : 1;
     potValue = safe_midi_value(settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] - speed);
     settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] = potValue;
   }
@@ -348,11 +336,11 @@ void handle_menu() {
 // ================
 
 void setup() {
-  // Turn off system leds
+  // Turn off board leds
   pinMode(LED_BUILTIN_TX, INPUT);
   pinMode(LED_BUILTIN_RX, INPUT);
 
-
+  // Initialize board pins
   pinMode(LEFT_PIN, INPUT_PULLUP);
   pinMode(RIGHT_PIN, INPUT_PULLUP);
 
@@ -367,7 +355,7 @@ void setup() {
   Settings initSettings;
   load_settings(initSettings);
   if (initSettings.autoLoadSettings) {
-    load_settings(settings);
+    settings = initSettings;
   }
 
   init_display();
