@@ -56,6 +56,8 @@ Settings settings = {
   .autoLoadSettings = false,
 };
 
+Settings defaultSettings = settings;
+
 uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {0, 0, 0, 0},
   {0, 0, 0, 0},
@@ -307,6 +309,9 @@ void handle_menu() {
     } else if (menuSelectedRow == MENU_SAVE) {
       render_saving();
       save_settings(settings);
+  }  else if (menuSelectedRow == MENU_RESET) {
+      render_resetting();
+      settings = defaultSettings;
     } else if (isSubMenuActive) {
       isSubMenuActive = false;
       render_menu();

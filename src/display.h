@@ -14,5 +14,6 @@ void render_midi_values_swap(int8_t trackIndex);
 void render_menu();
 void render_loading();
 void render_saving();
+void render_resetting();
 
 #endif

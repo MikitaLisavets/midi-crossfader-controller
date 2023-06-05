@@ -162,6 +162,10 @@ void render_row_save() {
   display.println(F("Save Settings"));
 }
 
+void render_row_reset() {
+  display.println(F("Reset Settings"));
+}
+
 void render_row_midi_channel(bool hasActiveSubMenu) {
   display.print(F("MIDI Channel: "));
   if (hasActiveSubMenu) {
@@ -214,6 +218,7 @@ void render_row(int8_t rowIndex) {
   switch(rowIndex) {
     case MENU_LOAD: return render_row_load();
     case MENU_SAVE: return render_row_save();
+    case MENU_RESET: return render_row_reset();
     case MENU_MIDI_CHANNEL: return render_row_midi_channel(hasActiveSubMenu);
     case MENU_FADER_THRESHOLD: return render_row_fader_threshold(hasActiveSubMenu);
     case MENU_AUTO_LOAD_SETTINGS: return render_row_auto_load_settings(hasActiveSubMenu);
@@ -262,6 +267,13 @@ void render_saving() {
   clear_dispay();
   display.setScale(2);
   display.println(F("Saving..."));
+  refresh_dispay();
+}
+
+void render_resetting() {
+  clear_dispay();
+  display.setScale(2);
+  display.println(F("Resetting..."));
   refresh_dispay();
 }
 
