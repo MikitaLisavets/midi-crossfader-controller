@@ -17,7 +17,7 @@
 
 #define NUMBER_OF_SIDES 2
 
-#define MAX_MENU_ROWS 20
+#define MAX_MENU_ROWS 23
 #define SCREEN_MENU_ROWS 3
 
 extern uint8_t TRACK_PINS[NUMBER_OF_TRACKS];
@@ -53,6 +53,7 @@ enum menu_t : uint8_t {
   MENU_C4_CC = 19,
   MENU_D4_CC = 20,
   MENU_FADER_THRESHOLD = 21,
+  MENU_UI = 22,
 };
 
 enum side_t : int8_t {
@@ -67,6 +68,7 @@ struct Settings {
   uint8_t midiValues[NUMBER_OF_SIDES][NUMBER_OF_PAGES][NUMBER_OF_TRACKS][NUMBER_OF_STAGES];
   uint8_t ccValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
   bool autoLoadSettings;
+  bool minimalUI;
 };
 
 extern Settings settings;

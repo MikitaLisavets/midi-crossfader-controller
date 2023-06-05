@@ -54,6 +54,7 @@ Settings settings = {
     {13, 14, 15, 16}
   },
   .autoLoadSettings = false,
+  .minimalUI = true
 };
 
 Settings defaultSettings = settings;
@@ -166,6 +167,9 @@ void handle_menu() {
       if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
         settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
       }
+      if (menuSelectedRow == MENU_UI) {
+        settings.minimalUI = settings.minimalUI ? false : true;
+      }
       if (menuSelectedRow == MENU_A1_CC) {
         settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] + 1);
       }
@@ -232,6 +236,9 @@ void handle_menu() {
       }
       if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
         settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
+      }
+      if (menuSelectedRow == MENU_UI) {
+        settings.minimalUI = settings.minimalUI ? false : true;
       }
       if (menuSelectedRow == MENU_A1_CC) {
         settings.ccValues[0][0] = safe_midi_value(settings.ccValues[0][0] - 1);
