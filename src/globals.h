@@ -19,6 +19,8 @@
 
 #define MAX_MENU_ROWS 23
 
+#define CLICK_TIMEOUT 300
+
 extern uint8_t TRACK_PINS[NUMBER_OF_TRACKS];
 extern uint8_t PAGE_PINS[NUMBER_OF_PAGES];
 
@@ -73,6 +75,15 @@ struct Settings {
 };
 
 extern Settings settings;
+
+struct StateEvent {
+  bool pageChanged;
+  bool stageChanged;
+  bool midiValuesChanged;
+  bool midiValuesSwap;
+  int8_t trackIndex;
+  side_t side;
+};
 
 extern uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS];
 

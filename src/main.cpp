@@ -59,6 +59,15 @@ Settings settings = {
 
 Settings defaultSettings = settings;
 
+StateEvent stateEvent {
+  .pageChanged = false,
+  .stageChanged = false,
+  .midiValuesChanged = false,
+  .midiValuesSwap = false,
+  .trackIndex = -1,
+  .side = SIDE_LEFT
+};
+
 uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {0, 0, 0, 0},
   {0, 0, 0, 0},
@@ -148,8 +157,7 @@ void handle_midi_values_swap(byte trackIndex) {
   settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]] = settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]];
   settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]] = temp;
   render_midi_values_swap(trackIndex);
-
-  delay(300);
+  delay(CLICK_TIMEOUT);
 }
 
 void handle_menu() {
@@ -314,14 +322,14 @@ void handle_menu() {
       isSubMenuActive = true;
       render_menu();
     }
-    delay(300);
+    delay(CLICK_TIMEOUT);
   }
 
   if (is_left_button_pressed()) {
     if (isSubMenuActive) {
       isSubMenuActive = false;
       render_menu();
-      delay(300);
+      delay(CLICK_TIMEOUT);
     } else {
       isMenuMode = false;
       menuSelectedRow = 0;
@@ -373,17 +381,15 @@ void setup() {
 void loop() {
   encoder_tick();
 
-  if (!isMenuMode && is_encoder_clicked()) {
+  if (isMenuMode) {
+    handle_menu();
+    return;
+  } else if (is_encoder_clicked()) {
     isMenuMode = true;
   }
 
   int8_t pIndex = get_pressed_page_button();
   int8_t tIndex = get_pressed_track_button();
-
-  if (isMenuMode) {
-    handle_menu();
-    return;
-  }
 
   if (is_left_button_pressed() && is_right_button_pressed()) {
     if (is_button_pressed(tIndex)) {
@@ -442,6 +448,6 @@ void loop() {
     }
   }
 
-  render_main();
+  render_main(stateEvent);
 }
 

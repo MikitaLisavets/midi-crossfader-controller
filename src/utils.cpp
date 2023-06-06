@@ -3,7 +3,6 @@
 #include <utils.h>
 
 #define STR_ADDR 0
-#define CLICK_TIMEOUT 300
 
 int64_t encoder_click_timer = 0;
 
