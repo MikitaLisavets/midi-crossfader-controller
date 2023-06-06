@@ -12,7 +12,6 @@ bool is_encoder_turned_right();
 bool is_encoder_turned_left();
 bool is_encoder_turned_fast();
 bool is_encoder_clicked();
-bool is_encoder_hold();
 
 bool is_left_button_pressed();
 bool is_right_button_pressed();

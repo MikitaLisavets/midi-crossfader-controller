@@ -3,6 +3,9 @@
 #include <utils.h>
 
 #define STR_ADDR 0
+#define CLICK_TIMEOUT 300
+
+int64_t encoder_click_timer = 0;
 
 EncButton<EB_TICK, DT_PIN, CLK_PIN, SW_PIN> encoder;
 
@@ -39,12 +42,20 @@ bool is_encoder_turned_fast() {
   return encoder.isFast();
 }
 
-bool is_encoder_clicked() {
-  return encoder.isClick();
+void start_encoder_click_timeout() {
+  encoder_click_timer = millis();
 }
 
-bool is_encoder_hold() {
-  return encoder.isHold();
+bool is_encoder_click_timeout_ended() {
+  return millis() - encoder_click_timer >= CLICK_TIMEOUT;
+}
+
+bool is_encoder_clicked() {
+  if (digitalRead(SW_PIN) == LOW && is_encoder_click_timeout_ended()) {
+    start_encoder_click_timeout();
+    return true;
+  }
+  return false;
 }
 
 bool is_left_button_pressed() {
