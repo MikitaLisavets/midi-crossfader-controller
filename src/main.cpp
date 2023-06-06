@@ -68,6 +68,8 @@ StateEvent stateEvent {
   .side = SIDE_LEFT
 };
 
+StateEvent defaultStateEvent = stateEvent;
+
 uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_TRACKS] = {
   {0, 0, 0, 0},
   {0, 0, 0, 0},
@@ -93,7 +95,8 @@ void handle_page_press(uint8_t newPageIndex) {
   */
 
   pageIndex = newPageIndex;
-  render_page_press();
+
+  stateEvent.pageChanged = true;
 }
 
 void handle_stage_change(int8_t newStageIndex, int8_t trackIndex, side_t side) {
@@ -113,7 +116,9 @@ void handle_stage_change(int8_t newStageIndex, int8_t trackIndex, side_t side) {
     }
   }
 
-  render_stage_change(trackIndex, side);
+  stateEvent.stageChanged = true;
+  stateEvent.trackIndex = trackIndex;
+  stateEvent.side = side;
 }
 
 void handle_track_press(byte trackIndex) {
@@ -124,7 +129,8 @@ void handle_track_press(byte trackIndex) {
 
   control_change(settings.midiChannel, settings.ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
   send_midi();
-  render_track_press(trackIndex);
+
+  stateEvent.trackIndex = trackIndex;
 
   delay(100);
 }
@@ -145,7 +151,9 @@ void handle_midi_value_change(int8_t trackIndex, side_t side) {
     settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]] = potValue;
   }
 
-  render_midi_value_change(trackIndex, side);
+  stateEvent.midiValuesChanged = true;
+  stateEvent.trackIndex = trackIndex;
+  stateEvent.side = side;
 }
 
 void handle_midi_values_swap(byte trackIndex) {
@@ -156,7 +164,9 @@ void handle_midi_values_swap(byte trackIndex) {
   byte temp = settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]];
   settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]] = settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]];
   settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]] = temp;
-  render_midi_values_swap(trackIndex);
+
+  stateEvent.midiValuesSwap = true;
+  stateEvent.trackIndex = trackIndex;
   delay(CLICK_TIMEOUT);
 }
 
@@ -379,6 +389,8 @@ void setup() {
 }
 
 void loop() {
+  stateEvent = defaultStateEvent;
+
   encoder_tick();
 
   if (isMenuMode) {
@@ -394,36 +406,27 @@ void loop() {
   if (is_left_button_pressed() && is_right_button_pressed()) {
     if (is_button_pressed(tIndex)) {
       handle_midi_values_swap(tIndex);
-      return;
     }
   } else if (is_left_button_pressed()) {
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
       handle_stage_change(pIndex, tIndex, SIDE_LEFT);
-      return;
     } else if (is_button_pressed(pIndex)) {
       handle_stage_change(pIndex, -1, SIDE_LEFT);
-      return;
     } else if (is_button_pressed(tIndex)) {
       handle_midi_value_change(tIndex, SIDE_LEFT);
-      return;
     }
   } else if (is_right_button_pressed()) {
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
       handle_stage_change(pIndex, tIndex, SIDE_RIGHT);
-      return;
     } else if (is_button_pressed(pIndex)) {
       handle_stage_change(pIndex, -1, SIDE_RIGHT);
-      return;
     } else if (is_button_pressed(tIndex)) {
       handle_midi_value_change(tIndex, SIDE_RIGHT);
-      return;
     }
   } else if (is_button_pressed(tIndex)) {
     handle_track_press(tIndex);
-    return;
   } else if (is_button_pressed(pIndex)) {
     handle_page_press(pIndex);
-    return;
   }
 
   faderValue = analogRead(FADER_PIN);

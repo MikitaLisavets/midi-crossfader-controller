@@ -59,85 +59,13 @@ void render_init_screen() {
   delay(200);
 }
 
-void render_main(
-  StateEvent stateEvent
-) {
-  clear_dispay();
-
-  for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
-    if (stateEvent.trackIndex == i && !stateEvent.stageChanged && !stateEvent.midiValuesChanged && !stateEvent.midiValuesSwap) {
-      display.invertText(true);
-    }
-    display.print(trackTitles[i]);
-    if (stateEvent.pageChanged) {
-      display.invertText(true);
-    }
-    display.print(pageTitles[pageIndex]);
-    display.invertText(false);
-    display.print(F(": "));
-    if ((stateEvent.trackIndex == i || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_LEFT) {
-      display.invertText(true);
-    }
-    display.print(stageTitles[settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
-    display.invertText(false);
-    display.print(F("| "));
-    if (stateEvent.trackIndex == i && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_LEFT) || stateEvent.midiValuesSwap)) {
-      display.invertText(true);
-    }
-    render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][i][settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
-    display.invertText(false);
-    display.print(F("<"));
-    render_filled_number(midiValues[pageIndex][i]);
-    display.print(F(">"));
-    if (stateEvent.trackIndex == i && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
-      display.invertText(true);
-    }
-    render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][i][settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
-    display.invertText(false);
-    display.print(F(" |"));
-    if ((stateEvent.trackIndex == i || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_RIGHT) {
-      display.invertText(true);
-    }
-    display.print(stageTitles[settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
-    display.invertText(false);
-    display.println();
-    #ifndef SMALL_DISPLAY
-      display.println(F("----------------------"));
-    #endif
-  }
-
-  refresh_dispay();
-}
-
 void render_page_press() {
-  if (settings.minimalUI) {
-    render_main({
-      .pageChanged = true
-    });
-    return;
-  }
-
-  clear_dispay();
   display.setScale(3);
   display.print(F("Page:"));
   display.println(pageTitles[pageIndex]);
-  refresh_dispay();
 }
 
 void render_stage_change(int8_t trackIndex, side_t side) {
-  if (settings.minimalUI) {
-    render_main({
-      .pageChanged = false,
-      .stageChanged = true,
-      .midiValuesChanged = false,
-      .midiValuesSwap = false,
-      .trackIndex = trackIndex,
-      .side = side
-    });
-    return;
-  }
-
-  clear_dispay();
   display.setScale(2);
   if (trackIndex >= 0) {
     if (side == SIDE_LEFT) {
@@ -158,45 +86,17 @@ void render_stage_change(int8_t trackIndex, side_t side) {
     display.println(stageTitles[settings.stageIndexes[side][pageIndex][0]]);
     display.println(F("All tracks"));
   }
-
-  refresh_dispay();
 }
 
 void render_track_press(int8_t trackIndex) {
-  if (settings.minimalUI) {
-    render_main({
-      .pageChanged = false,
-      .stageChanged = false,
-      .midiValuesChanged = false,
-      .midiValuesSwap = false,
-      .trackIndex = trackIndex
-    });
-    return;
-  }
-
-  clear_dispay();
   display.setScale(2);
   display.println(F("Sending ..."));
   display.print(F("Track: "));
   display.print(trackTitles[trackIndex]);
   display.println(pageTitles[pageIndex]);
-  refresh_dispay();
 }
 
 void render_midi_value_change(int8_t trackIndex, side_t side) {
-  if (settings.minimalUI) {
-     render_main({
-      .pageChanged = false,
-      .stageChanged = false,
-      .midiValuesChanged = true,
-      .midiValuesSwap = false,
-      .trackIndex = trackIndex,
-      .side = side
-    });
-    return;
-  }
-
-  clear_dispay();
   display.setScale(2);
 
   if (side == SIDE_LEFT) {
@@ -206,20 +106,9 @@ void render_midi_value_change(int8_t trackIndex, side_t side) {
   }
 
   display.println(settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]]);
-
-  refresh_dispay();
 }
 
 void render_midi_values_swap(int8_t trackIndex) {
-  if (settings.minimalUI) return render_main({
-    .pageChanged = false,
-    .stageChanged = false,
-    .midiValuesChanged = false,
-    .midiValuesSwap = true,
-    .trackIndex = trackIndex
-  });
-
-  clear_dispay();
   display.setScale(2);
   display.println(F("Swap values"));
   display.print(settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
@@ -227,6 +116,67 @@ void render_midi_values_swap(int8_t trackIndex) {
   display.println(settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
   display.print(F("Track: "));
   display.println(trackTitles[trackIndex]);
+}
+
+void render_main(
+  StateEvent stateEvent
+) {
+  clear_dispay();
+
+  if (!settings.minimalUI && stateEvent.pageChanged) {
+    render_page_press();
+  } else if (!settings.minimalUI && stateEvent.stageChanged) {
+    render_stage_change(stateEvent.trackIndex, stateEvent.side);
+  } else if (!settings.minimalUI && stateEvent.midiValuesChanged) {
+    render_midi_value_change(stateEvent.trackIndex, stateEvent.side);
+  } else if (!settings.minimalUI && stateEvent.midiValuesSwap) {
+    render_midi_values_swap(stateEvent.trackIndex);
+  } else if (!settings.minimalUI && stateEvent.trackIndex >= 0) {
+    render_track_press(stateEvent.trackIndex);
+  } else {
+    for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
+      if (stateEvent.trackIndex == i && !stateEvent.stageChanged && !stateEvent.midiValuesChanged && !stateEvent.midiValuesSwap) {
+        display.invertText(true);
+      }
+      display.print(trackTitles[i]);
+      if (stateEvent.pageChanged) {
+        display.invertText(true);
+      }
+      display.print(pageTitles[pageIndex]);
+      display.invertText(false);
+      display.print(F(": "));
+      if ((stateEvent.trackIndex == i || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_LEFT) {
+        display.invertText(true);
+      }
+      display.print(stageTitles[settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
+      display.invertText(false);
+      display.print(F("| "));
+      if (stateEvent.trackIndex == i && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_LEFT) || stateEvent.midiValuesSwap)) {
+        display.invertText(true);
+      }
+      render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][i][settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
+      display.invertText(false);
+      display.print(F("<"));
+      render_filled_number(midiValues[pageIndex][i]);
+      display.print(F(">"));
+      if (stateEvent.trackIndex == i && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
+        display.invertText(true);
+      }
+      render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][i][settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
+      display.invertText(false);
+      display.print(F(" |"));
+      if ((stateEvent.trackIndex == i || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_RIGHT) {
+        display.invertText(true);
+      }
+      display.print(stageTitles[settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
+      display.invertText(false);
+      display.println();
+      #ifndef SMALL_DISPLAY
+        display.println(F("----------------------"));
+      #endif
+    }
+  }
+
   refresh_dispay();
 }
 
