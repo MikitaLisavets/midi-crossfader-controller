@@ -1,8 +1,14 @@
-#include <SPI.h>
+#define OLED_SPI_SPEED 4000000ul
 #include <GyverOLED.h> // Source: https://github.com/GyverLibs/GyverOLED
 #include <display.h>
 
-GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
+// #define SMALL_DISPLAY
+
+#ifdef SMALL_DISPLAY
+  GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
+#else
+  GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
+#endif
 
 char trackTitles[4] = { 'A', 'B', 'C', 'D' };
 char pageTitles[4] = { '1', '2', '3', '4' };
@@ -12,7 +18,7 @@ void clear_dispay() {
   display.clear();
   display.setScale(1);
   display.invertText(false);
-  display.setCursor(0, 0);
+  display.home();
 }
 
 void refresh_dispay() {
