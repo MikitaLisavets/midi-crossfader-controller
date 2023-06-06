@@ -4,10 +4,12 @@
 
 // #define SMALL_DISPLAY
 
-#ifdef SMALL_DISPLAY
-  GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
-#else
+#ifndef SMALL_DISPLAY
   GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
+  #define SCREEN_MENU_ROWS 7
+#else
+  GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
+  #define SCREEN_MENU_ROWS 3
 #endif
 
 char trackTitles[4] = { 'A', 'B', 'C', 'D' };
@@ -42,22 +44,16 @@ void render_init_screen() {
   display.setCursor(25, 1);
   display.print(F("X"));
   refresh_dispay();
-  delay(10);
   display.print(F("-"));
   refresh_dispay();
-  delay(10);
   display.print(F("F"));
   refresh_dispay();
-  delay(10);
   display.print(F("a"));
   refresh_dispay();
-  delay(10);
   display.print(F("d"));
   refresh_dispay();
-  delay(10);
   display.print(F("e"));
   refresh_dispay();
-  delay(10);
   display.print(F("r"));
   refresh_dispay();
   delay(200);
@@ -98,21 +94,14 @@ void render_simple_main(
     display.print(stageTitles[settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
     display.invertText(false);
     display.println();
+    #ifndef SMALL_DISPLAY
+      display.println(F("----------------------"));
+    #endif
   }
 
   refresh_dispay();
 }
 
-
-void render_page_press() {
-  if (settings.minimalUI) return render_simple_main(true);
-
-  clear_dispay();
-  display.setScale(3);
-  display.print(F("Page:"));
-  display.println(pageTitles[pageIndex]);
-  refresh_dispay();
-}
 
 void render_main() {
   clear_dispay();
@@ -131,8 +120,21 @@ void render_main() {
     display.print(F(" |"));
     display.print(stageTitles[settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
     display.println();
+    #ifndef SMALL_DISPLAY
+      display.println(F("----------------------"));
+    #endif
   }
 
+  refresh_dispay();
+}
+
+void render_page_press() {
+  if (settings.minimalUI) return render_simple_main(true);
+
+  clear_dispay();
+  display.setScale(3);
+  display.print(F("Page:"));
+  display.println(pageTitles[pageIndex]);
   refresh_dispay();
 }
 

@@ -350,6 +350,7 @@ void setup() {
   // Initialize board pins
   pinMode(LEFT_PIN, INPUT_PULLUP);
   pinMode(RIGHT_PIN, INPUT_PULLUP);
+  pinMode(SW_PIN, INPUT_PULLUP);
 
   for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
     pinMode(TRACK_PINS[i], INPUT_PULLUP);
