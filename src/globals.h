@@ -5,11 +5,11 @@
 
 #define CLK_PIN 1
 #define DT_PIN 0
-#define SW_PIN A3
+#define SW_PIN 16
 
-#define FADER_PIN A0
-#define LEFT_PIN A1
-#define RIGHT_PIN A2
+#define FADER_PIN 10
+#define LEFT_PIN 4
+#define RIGHT_PIN 15
 
 #define NUMBER_OF_TRACKS 4
 #define NUMBER_OF_PAGES 4

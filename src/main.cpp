@@ -5,8 +5,8 @@
 
 // === Initialize variables ===
 
-uint8_t TRACK_PINS[NUMBER_OF_TRACKS] = {4, 5, 6, 7};
-uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {8, 9, 10, 16};
+uint8_t TRACK_PINS[NUMBER_OF_TRACKS] = {5, 7, 9, A1};
+uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {6, 8, A2, A0};
 
 bool isMenuMode = false;
 bool isSubMenuActive = false;
