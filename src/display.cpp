@@ -62,12 +62,14 @@ void render_init_screen() {
 }
 
 void render_page_press() {
+  clear_dispay();
   display.setScale(3);
   display.print(F("Page:"));
   display.println(pageTitles[pageIndex]);
 }
 
 void render_stage_change(int8_t trackIndex, side_t side) {
+  clear_dispay();
   display.setScale(2);
   if (trackIndex >= 0) {
     if (side == SIDE_LEFT) {
@@ -91,14 +93,16 @@ void render_stage_change(int8_t trackIndex, side_t side) {
 }
 
 void render_track_press(int8_t trackIndex) {
+  clear_dispay();
   display.setScale(2);
-  display.println(F("Sending ..."));
+  display.println(F("Send MIDI"));
   display.print(F("Track: "));
   display.print(trackTitles[trackIndex]);
   display.println(pageTitles[pageIndex]);
 }
 
 void render_midi_value_change(int8_t trackIndex, side_t side) {
+  clear_dispay();
   display.setScale(2);
 
   if (side == SIDE_LEFT) {
@@ -111,6 +115,7 @@ void render_midi_value_change(int8_t trackIndex, side_t side) {
 }
 
 void render_midi_values_swap(int8_t trackIndex) {
+  clear_dispay();
   display.setScale(2);
   display.println(F("Swap values"));
   display.print(settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
