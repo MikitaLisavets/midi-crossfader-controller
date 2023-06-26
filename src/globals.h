@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#define VERSION "1.0.0"
+
 #define CLK_PIN 1
 #define DT_PIN 0
 #define SW_PIN 16

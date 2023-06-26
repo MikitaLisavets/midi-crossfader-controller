@@ -2,15 +2,8 @@
 #include <GyverOLED.h> // Source: https://github.com/GyverLibs/GyverOLED
 #include <display.h>
 
-// #define SMALL_DISPLAY
-
-#ifndef SMALL_DISPLAY
-  GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
-  #define SCREEN_MENU_ROWS 7
-#else
-  GyverOLED<SSD1306_128x32, OLED_BUFFER> display;
-  #define SCREEN_MENU_ROWS 3
-#endif
+GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
+#define SCREEN_MENU_ROWS 7
 
 char trackTitles[4] = { 'A', 'B', 'C', 'D' };
 char pageTitles[4] = { '1', '2', '3', '4' };
@@ -43,6 +36,12 @@ void render_filled_number(uint8_t num) {
 void render_init_screen() {
   clear_dispay();
 
+  display.setScale(1);
+  display.setCursor(0, 7);
+  display.print(F("Version: "));
+  display.print(VERSION);
+  refresh_dispay();
+
   display.setScale(2);
   display.setCursor(25, 1);
   display.print(F("X"));
@@ -59,7 +58,7 @@ void render_init_screen() {
   refresh_dispay();
   display.print(F("r"));
   refresh_dispay();
-  delay(200);
+  delay(300);
 }
 
 void render_page_press() {
@@ -174,9 +173,7 @@ void render_main(
       display.print(stageTitles[settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
       display.invertText(false);
       display.println();
-      #ifndef SMALL_DISPLAY
-        display.println(F("----------------------"));
-      #endif
+      display.println(F("----------------------"));
     }
   }
 
