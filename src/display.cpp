@@ -18,6 +18,9 @@ char stageTitles[4] = { '1', '2', '3', '4' };
 
 void clear_dispay() {
   display.clear();
+}
+
+void reset_dispay() {
   display.setScale(1);
   display.invertText(false);
   display.home();
@@ -121,7 +124,7 @@ void render_midi_values_swap(int8_t trackIndex) {
 void render_main(
   StateEvent stateEvent
 ) {
-  clear_dispay();
+  reset_dispay();
 
   if (!settings.minimalUI && stateEvent.pageChanged) {
     render_page_press();
@@ -284,6 +287,7 @@ void render_row(int8_t rowIndex) {
 
 void render_menu() {
   clear_dispay();
+  reset_dispay();
   display.setCursor(30, 0);
   display.println(F("=== Menu ==="));
   display.setCursor(0, 1);
@@ -299,6 +303,7 @@ void render_menu() {
 
 void render_loading() {
   clear_dispay();
+  reset_dispay();
   display.setScale(2);
   display.println(F("Loading..."));
   refresh_dispay();
@@ -306,6 +311,7 @@ void render_loading() {
 
 void render_saving() {
   clear_dispay();
+  reset_dispay();
   display.setScale(2);
   display.println(F("Saving..."));
   refresh_dispay();
@@ -313,6 +319,7 @@ void render_saving() {
 
 void render_resetting() {
   clear_dispay();
+  reset_dispay();
   display.setScale(2);
   display.println(F("Resetting..."));
   refresh_dispay();
@@ -322,4 +329,5 @@ void init_display() {
   display.init();
   render_init_screen();
   clear_dispay();
+  reset_dispay();
 }
