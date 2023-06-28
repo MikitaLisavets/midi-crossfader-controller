@@ -152,6 +152,14 @@ void render_row_fader_threshold(bool hasActiveSubMenu) {
   display.println(settings.faderThreshold);
 }
 
+void render_row_scroll_fast_speed(bool hasActiveSubMenu) {
+  display.print(F("Scroll fast speed: "));
+  if (hasActiveSubMenu) {
+    display.invertText(true);
+  }
+  display.println(settings.scrollFastSpeed);
+}
+
 void render_row_auto_load_settings(bool hasActiveSubMenu) {
   display.print(F("Auto-Load: "));
   if (hasActiveSubMenu) {
@@ -190,6 +198,7 @@ void render_row(int8_t rowIndex) {
     case MENU_MIDI_CHANNEL: return render_row_midi_channel(hasActiveSubMenu);
     case MENU_FADER_THRESHOLD: return render_row_fader_threshold(hasActiveSubMenu);
     case MENU_AUTO_LOAD_SETTINGS: return render_row_auto_load_settings(hasActiveSubMenu);
+    case MENU_SCROLL_FAST_SPEED: return render_row_scroll_fast_speed(hasActiveSubMenu);
     case MENU_A1_CC: return render_row_track_cc(0, 0, hasActiveSubMenu);
     case MENU_B1_CC: return render_row_track_cc(0, 1, hasActiveSubMenu);
     case MENU_C1_CC: return render_row_track_cc(0, 2, hasActiveSubMenu);

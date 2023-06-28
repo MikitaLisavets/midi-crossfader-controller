@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION 1.3
+#define VERSION 1.4
 
 #define CLK_PIN 1
 #define DT_PIN 0
@@ -42,6 +42,7 @@ enum menu_t : uint8_t {
   MENU_AUTO_LOAD_SETTINGS,
   MENU_FADER_THRESHOLD,
   MENU_MIDI_CHANNEL,
+  MENU_SCROLL_FAST_SPEED,
   MENU_A1_CC,
   MENU_B1_CC,
   MENU_C1_CC,
@@ -116,6 +117,7 @@ enum side_t : int8_t {
 struct Settings {
   uint8_t midiChannel;
   uint8_t faderThreshold;
+  uint8_t scrollFastSpeed;
   uint8_t stageIndexes[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS];
   uint8_t midiValues[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS][NUMBER_OF_STAGES];
   uint8_t ccValues[NUMBER_OF_PAGES][ALL_TRACKS];

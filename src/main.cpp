@@ -37,6 +37,7 @@ void reset_settings_to_default() {
   settings = {
     .midiChannel = 0,
     .faderThreshold = 10,
+    .scrollFastSpeed = 5,
     .stageIndexes = {
       {
         {0},
@@ -134,7 +135,7 @@ void handle_midi_value_change(int8_t trackIndex, side_t side) {
     TRACK button and LEFT/RIGHT button pressed:
       listen to POT and change left/right midi value
   */
-  int8_t speed = is_encoder_turned_fast() ? 5 : 1;
+  int8_t speed = is_encoder_turned_fast() ? settings.scrollFastSpeed : 1;
   int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
 
   if (is_encoder_turned_right()) {
@@ -180,6 +181,9 @@ void handle_menu() {
       }
       if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
         settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
+      }
+      if (menuSelectedRow == MENU_SCROLL_FAST_SPEED) {
+        settings.scrollFastSpeed = safe_midi_value(settings.scrollFastSpeed + 1);
       }
       if (menuSelectedRow == MENU_A1_CC) { increase_cc_value(0, 0); }
       if (menuSelectedRow == MENU_B1_CC) { increase_cc_value(0, 1); }
@@ -266,6 +270,9 @@ void handle_menu() {
       }
       if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
         settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
+      }
+      if (menuSelectedRow == MENU_SCROLL_FAST_SPEED) {
+        settings.scrollFastSpeed = safe_midi_value(settings.scrollFastSpeed - 1);
       }
       if (menuSelectedRow == MENU_A1_CC) { decrease_cc_value(0, 0); }
       if (menuSelectedRow == MENU_B1_CC) { decrease_cc_value(0, 1); }
