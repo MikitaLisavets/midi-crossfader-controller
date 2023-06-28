@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION 1.10
+#define VERSION 1.20
 
 #define CLK_PIN 1
 #define DT_PIN 0
@@ -13,7 +13,7 @@
 #define LEFT_PIN 4
 #define RIGHT_PIN 15
 
-#define ALL_TRACKS 8
+#define ALL_TRACKS 16
 #define NUMBER_OF_TRACKS 4
 #define NUMBER_OF_PAGES 4
 #define NUMBER_OF_STAGES 4

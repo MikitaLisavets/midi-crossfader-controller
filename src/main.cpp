@@ -17,38 +17,9 @@ int16_t faderValue = 0;
 int8_t menuSelectedRow = 0;
 int8_t trackOffset = 0;
 
-const uint8_t defaultMidiChannel = 0;
-const uint8_t defaultFaderThreshold = 10;
-const uint8_t defaultStageIndexes[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS] = {{ {0}, }, { {0}, }};
-const uint8_t defaultMidiValues[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS][NUMBER_OF_STAGES] = {
-  {{ {0} }},
-  {
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-    {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}}
-  }
-};
-const uint8_t defaultCcValues[NUMBER_OF_PAGES][ALL_TRACKS] = {
-  {1, 2, 3, 4, 17, 18, 19, 20},
-  {5, 6, 7, 8, 21, 22, 23, 24},
-  {9, 10, 11, 12, 25, 26, 27, 28},
-  {13, 14, 15, 16, 29, 30, 31, 32}
-};
-const bool defaultAutoLoadSettings = false;
-
 Settings settings;
 
-StateEvent stateEvent {
-  .pageChanged = false,
-  .stageChanged = false,
-  .midiValuesChanged = false,
-  .midiValuesSwap = false,
-  .trackIndex = -1,
-  .side = SIDE_LEFT
-};
-
-StateEvent defaultStateEvent = stateEvent;
+StateEvent stateEvent;
 
 uint8_t midiValues[NUMBER_OF_PAGES][ALL_TRACKS] = {
   {0}
@@ -62,22 +33,48 @@ uint8_t previousMidiValues[NUMBER_OF_PAGES][ALL_TRACKS] = {
 
 // === Handlers ===
 
-void reset_settings_to_default(Settings &settings) {
-  settings.midiChannel = defaultMidiChannel;
-  settings.faderThreshold = defaultFaderThreshold;
-  settings.autoLoadSettings = defaultAutoLoadSettings;
-
-  for (uint8_t sideIndex = 0; sideIndex < NUMBER_OF_SIDES; sideIndex++) {
-    for (uint8_t pageIndex = 0; pageIndex < NUMBER_OF_PAGES; pageIndex++) {
-      for (uint8_t trackIndex = 0; trackIndex < ALL_TRACKS; trackIndex++) {
-        for (uint8_t stageIndex = 0; stageIndex < NUMBER_OF_STAGES; stageIndex++) {
-          settings.stageIndexes[sideIndex][pageIndex][trackIndex] = defaultStageIndexes[sideIndex][pageIndex][trackIndex];
-          settings.midiValues[sideIndex][pageIndex][trackIndex][stageIndex] = defaultMidiValues[sideIndex][pageIndex][trackIndex][stageIndex];
-          settings.ccValues[pageIndex][trackIndex] = defaultCcValues[pageIndex][trackIndex];
-        }
+void reset_settings_to_default() {
+  settings = {
+    .midiChannel = 0,
+    .faderThreshold = 10,
+    .stageIndexes = {
+      {
+        {0},
+      },
+      {
+        {0},
       }
-    }
-  }
+    },
+    .midiValues = {
+      {
+        {{0}}
+      },
+      {
+        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
+        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
+        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
+        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
+      }
+    },
+    .ccValues = {
+      {1, 2, 3, 4, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+      {5, 6, 7, 8, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+      {9, 10, 11, 12, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
+      {13, 14, 15, 16, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64}
+    },
+    .autoLoadSettings = false,
+  };
+}
+
+void reset_state_to_default() {
+  stateEvent = {
+    .pageChanged = false,
+    .stageChanged = false,
+    .midiValuesChanged = false,
+    .midiValuesSwap = false,
+    .trackIndex = -1,
+    .side = SIDE_LEFT
+  };
 }
 
 void handle_page_press(uint8_t newPageIndex) {
@@ -290,7 +287,7 @@ void handle_menu() {
       save_settings(settings);
     } else if (menuSelectedRow == MENU_RESET) {
       render_resetting();
-      reset_settings_to_default(settings);
+      reset_settings_to_default();
     } else if (isSubMenuActive) {
       isSubMenuActive = false;
       render_menu();
@@ -349,12 +346,12 @@ void setup() {
 
   load_settings(settings);
   if (!settings.autoLoadSettings) {
-    reset_settings_to_default(settings);
+    reset_settings_to_default();
   }
 }
 
 void loop() {
-  stateEvent = defaultStateEvent;
+  reset_state_to_default();
 
   encoder_tick();
 

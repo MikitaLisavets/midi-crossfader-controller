@@ -5,7 +5,7 @@
 GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
 #define SCREEN_MENU_ROWS 7
 
-const char PROGMEM trackTitles[ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
+const char PROGMEM trackTitles[ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'};
 
 void clear_dispay() {
   display.clear();
@@ -106,7 +106,7 @@ void render_main(
     if (i < NUMBER_OF_TRACKS - 1) {
       display.println(F("----------------------"));
     } else {
-      display.print(F("__________"));
+      display.print(F("_________"));
       for (int8_t j = 0; j < ALL_TRACKS / NUMBER_OF_TRACKS; j++) {
         if (j ==  trackOffset / NUMBER_OF_TRACKS) {
           display.print(F("*"));
@@ -114,7 +114,7 @@ void render_main(
           display.print(F("."));
         }
       }
-      display.println(F("__________"));
+      display.println(F("_________"));
     }
   }
 
