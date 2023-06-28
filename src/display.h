@@ -4,7 +4,7 @@
 #include <globals.h>
 
 void init_display();
-void render_main(StateEvent stateEvent);
+void render_main(StateEvent &stateEvent);
 
 void render_menu();
 void render_loading();

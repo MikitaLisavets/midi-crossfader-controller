@@ -60,7 +60,7 @@ void render_init_screen() {
 }
 
 void render_main(
-  StateEvent stateEvent
+  StateEvent &stateEvent
 ) {
   reset_dispay();
 
