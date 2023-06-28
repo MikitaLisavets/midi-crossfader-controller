@@ -70,7 +70,7 @@ bool is_button_pressed(int8_t buttonIndex) {
 }
 
 int8_t get_pressed_track_button() {
-  for (int trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+  for (int8_t trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
     if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
       return trackIndex;
     }
@@ -79,7 +79,7 @@ int8_t get_pressed_track_button() {
 }
 
 int8_t get_pressed_page_button() {
-  for (int pageIndex = 0; pageIndex < NUMBER_OF_PAGES; pageIndex++) {
+  for (int8_t pageIndex = 0; pageIndex < NUMBER_OF_PAGES; pageIndex++) {
     if (digitalRead(PAGE_PINS[pageIndex]) == LOW ) {
       return pageIndex;
     }
@@ -95,4 +95,12 @@ uint8_t safe_midi_value(int16_t unsafe_midi_value) {
   } else {
     return unsafe_midi_value;
   }
+}
+
+void increase_cc_value(int8_t pageIndex, int8_t trackIndex) {
+  settings.ccValues[pageIndex][trackIndex] = safe_midi_value(settings.ccValues[pageIndex][trackIndex] + 1);
+}
+
+void decrease_cc_value(int8_t pageIndex, int8_t trackIndex) {
+  settings.ccValues[pageIndex][trackIndex] = safe_midi_value(settings.ccValues[pageIndex][trackIndex] - 1);
 }

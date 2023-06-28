@@ -5,9 +5,7 @@
 GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
 #define SCREEN_MENU_ROWS 7
 
-char trackTitles[4] = { 'A', 'B', 'C', 'D' };
-char pageTitles[4] = { '1', '2', '3', '4' };
-char stageTitles[4] = { '1', '2', '3', '4' };
+const char PROGMEM trackTitles[ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
 
 void clear_dispay() {
   display.clear();
@@ -61,124 +59,62 @@ void render_init_screen() {
   delay(300);
 }
 
-void render_page_press() {
-  clear_dispay();
-  display.setScale(3);
-  display.print(F("Page:"));
-  display.println(pageTitles[pageIndex]);
-}
-
-void render_stage_change(int8_t trackIndex, side_t side) {
-  clear_dispay();
-  display.setScale(2);
-  if (trackIndex >= 0) {
-    if (side == SIDE_LEFT) {
-      display.print(F("Stage L: "));
-    } else {
-      display.print(F("Stage R: "));
-    }
-    display.println(stageTitles[settings.stageIndexes[side][pageIndex][trackIndex]]);
-    display.print(F("Track: "));
-    display.print(trackTitles[trackIndex]);
-    display.println(pageTitles[pageIndex]);
-  } else {
-    if (side == SIDE_LEFT) {
-      display.print(F("Stage L: "));
-    } else {
-      display.print(F("Stage R: "));
-    }
-    display.println(stageTitles[settings.stageIndexes[side][pageIndex][0]]);
-    display.println(F("All tracks"));
-  }
-}
-
-void render_track_press(int8_t trackIndex) {
-  clear_dispay();
-  display.setScale(2);
-  display.println(F("Send MIDI"));
-  display.print(F("Track: "));
-  display.print(trackTitles[trackIndex]);
-  display.println(pageTitles[pageIndex]);
-}
-
-void render_midi_value_change(int8_t trackIndex, side_t side) {
-  clear_dispay();
-  display.setScale(2);
-
-  if (side == SIDE_LEFT) {
-    display.println(F("Value L:"));
-  } else {
-    display.println(F("Value R:"));
-  }
-
-  display.println(settings.midiValues[side][pageIndex][trackIndex][settings.stageIndexes[side][pageIndex][trackIndex]]);
-}
-
-void render_midi_values_swap(int8_t trackIndex) {
-  clear_dispay();
-  display.setScale(2);
-  display.println(F("Swap values"));
-  display.print(settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
-  display.print(F(" <> "));
-  display.println(settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
-  display.print(F("Track: "));
-  display.println(trackTitles[trackIndex]);
-}
-
 void render_main(
   StateEvent stateEvent
 ) {
   reset_dispay();
 
-  if (!settings.minimalUI && stateEvent.pageChanged) {
-    render_page_press();
-  } else if (!settings.minimalUI && stateEvent.stageChanged) {
-    render_stage_change(stateEvent.trackIndex, stateEvent.side);
-  } else if (!settings.minimalUI && stateEvent.midiValuesChanged) {
-    render_midi_value_change(stateEvent.trackIndex, stateEvent.side);
-  } else if (!settings.minimalUI && stateEvent.midiValuesSwap) {
-    render_midi_values_swap(stateEvent.trackIndex);
-  } else if (!settings.minimalUI && stateEvent.trackIndex >= 0) {
-    render_track_press(stateEvent.trackIndex);
-  } else {
-    for (int i = 0; i < NUMBER_OF_TRACKS; i++) {
-      if (stateEvent.trackIndex == i && !stateEvent.stageChanged && !stateEvent.midiValuesChanged && !stateEvent.midiValuesSwap) {
-        display.invertText(true);
-      }
-      display.print(trackTitles[i]);
-      if (stateEvent.pageChanged) {
-        display.invertText(true);
-      }
-      display.print(pageTitles[pageIndex]);
-      display.invertText(false);
-      display.print(F(": "));
-      if ((stateEvent.trackIndex == i || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_LEFT) {
-        display.invertText(true);
-      }
-      display.print(stageTitles[settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
-      display.invertText(false);
-      display.print(F("| "));
-      if (stateEvent.trackIndex == i && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_LEFT) || stateEvent.midiValuesSwap)) {
-        display.invertText(true);
-      }
-      render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][i][settings.stageIndexes[SIDE_LEFT][pageIndex][i]]);
-      display.invertText(false);
-      display.print(F("<"));
-      render_filled_number(midiValues[pageIndex][i]);
-      display.print(F(">"));
-      if (stateEvent.trackIndex == i && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
-        display.invertText(true);
-      }
-      render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][i][settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
-      display.invertText(false);
-      display.print(F(" |"));
-      if ((stateEvent.trackIndex == i || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_RIGHT) {
-        display.invertText(true);
-      }
-      display.print(stageTitles[settings.stageIndexes[SIDE_RIGHT][pageIndex][i]]);
-      display.invertText(false);
-      display.println();
+  for (int8_t i = 0; i < NUMBER_OF_TRACKS; i++) {
+    int8_t indexWithOffset = (trackOffset + i) % ALL_TRACKS;
+
+    if (stateEvent.trackIndex == (indexWithOffset) && !stateEvent.stageChanged && !stateEvent.midiValuesChanged && !stateEvent.midiValuesSwap) {
+      display.invertText(true);
+    }
+    display.print((char)pgm_read_byte(&trackTitles[(indexWithOffset)]));
+    if (stateEvent.pageChanged) {
+      display.invertText(true);
+    }
+    display.print(pageIndex + 1);
+    display.invertText(false);
+    display.print(F(": "));
+    if ((stateEvent.trackIndex == (indexWithOffset) || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_LEFT) {
+      display.invertText(true);
+    }
+    display.print(settings.stageIndexes[SIDE_LEFT][pageIndex][(indexWithOffset)] + 1);
+    display.invertText(false);
+    display.print(F("| "));
+    if (stateEvent.trackIndex == (indexWithOffset) && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_LEFT) || stateEvent.midiValuesSwap)) {
+      display.invertText(true);
+    }
+    render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][(indexWithOffset)][settings.stageIndexes[SIDE_LEFT][pageIndex][(indexWithOffset)]]);
+    display.invertText(false);
+    display.print(F("<"));
+    render_filled_number(midiValues[pageIndex][(indexWithOffset)]);
+    display.print(F(">"));
+    if (stateEvent.trackIndex == (indexWithOffset) && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
+      display.invertText(true);
+    }
+    render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][(indexWithOffset)][settings.stageIndexes[SIDE_RIGHT][pageIndex][(indexWithOffset)]]);
+    display.invertText(false);
+    display.print(F(" |"));
+    if ((stateEvent.trackIndex == (indexWithOffset) || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_RIGHT) {
+      display.invertText(true);
+    }
+    display.print(settings.stageIndexes[SIDE_RIGHT][pageIndex][(indexWithOffset)] + 1);
+    display.invertText(false);
+    display.println();
+    if (i < NUMBER_OF_TRACKS - 1) {
       display.println(F("----------------------"));
+    } else {
+      display.print(F("__________"));
+      for (int8_t j = 0; j < ALL_TRACKS / NUMBER_OF_TRACKS; j++) {
+        if (j ==  trackOffset / NUMBER_OF_TRACKS) {
+          display.print(F("*"));
+        } else {
+          display.print(F("."));
+        }
+      }
+      display.println(F("__________"));
     }
   }
 
@@ -229,26 +165,14 @@ void render_row_auto_load_settings(bool hasActiveSubMenu) {
 }
 
 void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex, bool hasActiveSubMenu) {
-  display.print(F("Track "));
-  display.print(trackTitles[trackIndex]);
-  display.print(pageTitles[pageIndex]);
-  display.print(F(" CC: "));
+  display.print(F("CC "));
+  display.print((char)pgm_read_byte(&trackTitles[trackIndex]));
+  display.print(pageIndex + 1);
+  display.print(F(": "));
   if (hasActiveSubMenu) {
     display.invertText(true);
   }
   display.println(settings.ccValues[pageIndex][trackIndex]);
-}
-
-void render_row_ui(bool hasActiveSubMenu) {
-  display.print(F("Minimal UI: "));
-  if (hasActiveSubMenu) {
-    display.invertText(true);
-  }
-  if (settings.minimalUI) {
-    display.println(F("Yes"));
-  } else {
-    display.println(F("No"));
-  }
 }
 
 void render_row(int8_t rowIndex) {
@@ -267,23 +191,38 @@ void render_row(int8_t rowIndex) {
     case MENU_MIDI_CHANNEL: return render_row_midi_channel(hasActiveSubMenu);
     case MENU_FADER_THRESHOLD: return render_row_fader_threshold(hasActiveSubMenu);
     case MENU_AUTO_LOAD_SETTINGS: return render_row_auto_load_settings(hasActiveSubMenu);
-    case MENU_UI: return render_row_ui(hasActiveSubMenu);
     case MENU_A1_CC: return render_row_track_cc(0, 0, hasActiveSubMenu);
     case MENU_B1_CC: return render_row_track_cc(0, 1, hasActiveSubMenu);
     case MENU_C1_CC: return render_row_track_cc(0, 2, hasActiveSubMenu);
     case MENU_D1_CC: return render_row_track_cc(0, 3, hasActiveSubMenu);
+    case MENU_E1_CC: return render_row_track_cc(0, 4, hasActiveSubMenu);
+    case MENU_F1_CC: return render_row_track_cc(0, 5, hasActiveSubMenu);
+    case MENU_G1_CC: return render_row_track_cc(0, 6, hasActiveSubMenu);
+    case MENU_H1_CC: return render_row_track_cc(0, 7, hasActiveSubMenu);
     case MENU_A2_CC: return render_row_track_cc(1, 0, hasActiveSubMenu);
     case MENU_B2_CC: return render_row_track_cc(1, 1, hasActiveSubMenu);
     case MENU_C2_CC: return render_row_track_cc(1, 2, hasActiveSubMenu);
     case MENU_D2_CC: return render_row_track_cc(1, 3, hasActiveSubMenu);
+    case MENU_E2_CC: return render_row_track_cc(1, 4, hasActiveSubMenu);
+    case MENU_F2_CC: return render_row_track_cc(1, 5, hasActiveSubMenu);
+    case MENU_G2_CC: return render_row_track_cc(1, 6, hasActiveSubMenu);
+    case MENU_H2_CC: return render_row_track_cc(1, 7, hasActiveSubMenu);
     case MENU_A3_CC: return render_row_track_cc(2, 0, hasActiveSubMenu);
     case MENU_B3_CC: return render_row_track_cc(2, 1, hasActiveSubMenu);
     case MENU_C3_CC: return render_row_track_cc(2, 2, hasActiveSubMenu);
     case MENU_D3_CC: return render_row_track_cc(2, 3, hasActiveSubMenu);
+    case MENU_E3_CC: return render_row_track_cc(2, 4, hasActiveSubMenu);
+    case MENU_F3_CC: return render_row_track_cc(2, 5, hasActiveSubMenu);
+    case MENU_G3_CC: return render_row_track_cc(2, 6, hasActiveSubMenu);
+    case MENU_H3_CC: return render_row_track_cc(2, 7, hasActiveSubMenu);
     case MENU_A4_CC: return render_row_track_cc(3, 0, hasActiveSubMenu);
     case MENU_B4_CC: return render_row_track_cc(3, 1, hasActiveSubMenu);
     case MENU_C4_CC: return render_row_track_cc(3, 2, hasActiveSubMenu);
     case MENU_D4_CC: return render_row_track_cc(3, 3, hasActiveSubMenu);
+    case MENU_E4_CC: return render_row_track_cc(3, 4, hasActiveSubMenu);
+    case MENU_F4_CC: return render_row_track_cc(3, 5, hasActiveSubMenu);
+    case MENU_G4_CC: return render_row_track_cc(3, 6, hasActiveSubMenu);
+    case MENU_H4_CC: return render_row_track_cc(3, 7, hasActiveSubMenu);
   }
 }
 

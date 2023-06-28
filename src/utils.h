@@ -21,4 +21,7 @@ int8_t get_pressed_track_button();
 int8_t get_pressed_page_button();
 uint8_t safe_midi_value(int16_t unsafe_midi_value);
 
+void increase_cc_value(int8_t pageIndex, int8_t trackIndex);
+void decrease_cc_value(int8_t pageIndex, int8_t trackIndex);
+
 #endif
