@@ -126,8 +126,6 @@ void handle_track_press(byte trackIndex) {
   send_midi();
 
   stateEvent.trackIndex = indexWithOffset;
-
-  delay(100);
 }
 
 void handle_midi_value_change(int8_t trackIndex, side_t side) {
@@ -164,7 +162,6 @@ void handle_midi_values_swap(byte trackIndex) {
 
   stateEvent.midiValuesSwap = true;
   stateEvent.trackIndex = indexWithOffset;
-  delay(CLICK_TIMEOUT);
 }
 
 void handle_menu() {
