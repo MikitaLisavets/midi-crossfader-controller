@@ -7,17 +7,17 @@ GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
 
 const char PROGMEM trackTitles[ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'};
 
-void clear_dispay() {
+void clear_display() {
   display.clear();
 }
 
-void reset_dispay() {
+void reset_display() {
   display.setScale(1);
   display.invertText(false);
   display.home();
 }
 
-void refresh_dispay() {
+void refresh_display() {
   display.update();
 }
 
@@ -32,37 +32,37 @@ void render_filled_number(uint8_t num) {
 }
 
 void render_init_screen() {
-  clear_dispay();
+  clear_display();
 
   display.setScale(1);
   display.setCursor(0, 7);
   display.print(F("Version: "));
   display.print(VERSION);
-  refresh_dispay();
+  refresh_display();
 
   display.setScale(2);
   display.setCursor(25, 1);
   display.print(F("X"));
-  refresh_dispay();
+  refresh_display();
   display.print(F("-"));
-  refresh_dispay();
+  refresh_display();
   display.print(F("F"));
-  refresh_dispay();
+  refresh_display();
   display.print(F("a"));
-  refresh_dispay();
+  refresh_display();
   display.print(F("d"));
-  refresh_dispay();
+  refresh_display();
   display.print(F("e"));
-  refresh_dispay();
+  refresh_display();
   display.print(F("r"));
-  refresh_dispay();
+  refresh_display();
   delay(300);
 }
 
 void render_main(
   StateEvent &stateEvent
 ) {
-  reset_dispay();
+  reset_display();
 
   for (int8_t i = 0; i < NUMBER_OF_TRACKS; i++) {
     int8_t indexWithOffset = (trackOffset + i) % ALL_TRACKS;
@@ -118,7 +118,7 @@ void render_main(
     }
   }
 
-  refresh_dispay();
+  refresh_display();
 }
 
 // === Menu ===
@@ -268,8 +268,8 @@ void render_row(int8_t rowIndex) {
 }
 
 void render_menu() {
-  clear_dispay();
-  reset_dispay();
+  clear_display();
+  reset_display();
   display.setCursor(30, 0);
   display.println(F("=== Menu ==="));
   display.setCursor(0, 1);
@@ -280,36 +280,36 @@ void render_menu() {
       render_row(menuSelectedRow - SCREEN_MENU_ROWS + 1 + i);
     }
   }
-  refresh_dispay();
+  refresh_display();
 }
 
 void render_loading() {
-  clear_dispay();
-  reset_dispay();
+  clear_display();
+  reset_display();
   display.setScale(2);
   display.println(F("Loading..."));
-  refresh_dispay();
+  refresh_display();
 }
 
 void render_saving() {
-  clear_dispay();
-  reset_dispay();
+  clear_display();
+  reset_display();
   display.setScale(2);
   display.println(F("Saving..."));
-  refresh_dispay();
+  refresh_display();
 }
 
 void render_resetting() {
-  clear_dispay();
-  reset_dispay();
+  clear_display();
+  reset_display();
   display.setScale(2);
   display.println(F("Resetting..."));
-  refresh_dispay();
+  refresh_display();
 }
 
 void init_display() {
   display.init();
   render_init_screen();
-  clear_dispay();
-  reset_dispay();
+  clear_display();
+  reset_display();
 }
