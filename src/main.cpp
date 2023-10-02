@@ -98,6 +98,7 @@ void handle_stage_change(int8_t newStageIndex, int8_t trackIndex, side_t side) {
         - change left/right stage for track on current page
     */
     settings.stageIndexes[side][pageIndex][indexWithOffset] = newStageIndex;
+    stateEvent.trackIndex = indexWithOffset;
   } else {
     /*
       PAGE button and LEFT/RIGHT button pressed:
@@ -106,10 +107,10 @@ void handle_stage_change(int8_t newStageIndex, int8_t trackIndex, side_t side) {
     for (int8_t tIndex = 0; tIndex < ALL_TRACKS; tIndex++) {
       settings.stageIndexes[side][pageIndex][tIndex] = newStageIndex;
     }
+    stateEvent.trackIndex = -1;
   }
 
   stateEvent.stageChanged = true;
-  stateEvent.trackIndex = indexWithOffset;
   stateEvent.side = side;
 }
 
@@ -164,7 +165,36 @@ void handle_midi_values_swap(byte trackIndex) {
   stateEvent.trackIndex = indexWithOffset;
 }
 
-void handle_menu() {
+// ================
+
+void setup() {
+  // Turn off board leds
+  pinMode(LED_BUILTIN_TX, INPUT);
+  pinMode(LED_BUILTIN_RX, INPUT);
+
+  // Initialize board pins
+  pinMode(LEFT_PIN, INPUT_PULLUP);
+  pinMode(RIGHT_PIN, INPUT_PULLUP);
+  pinMode(SW_PIN, INPUT_PULLUP);
+
+  for (int8_t i = 0; i < NUMBER_OF_TRACKS; i++) {
+    pinMode(TRACK_PINS[i], INPUT_PULLUP);
+  }
+
+  for (int8_t i = 0; i < NUMBER_OF_PAGES; i++) {
+    pinMode(PAGE_PINS[i], INPUT_PULLUP);
+  }
+
+  init_display();
+  init_encoder();
+
+  load_settings(settings);
+  if (!settings.autoLoadSettings) {
+    reset_settings_to_default();
+  }
+}
+
+void loop_menu() {
   int8_t pIndex = get_pressed_page_button();
   int8_t tIndex = get_pressed_track_button();
 
@@ -389,45 +419,10 @@ void handle_menu() {
   render_menu();
 }
 
-// ================
-
-void setup() {
-  // Turn off board leds
-  pinMode(LED_BUILTIN_TX, INPUT);
-  pinMode(LED_BUILTIN_RX, INPUT);
-
-  // Initialize board pins
-  pinMode(LEFT_PIN, INPUT_PULLUP);
-  pinMode(RIGHT_PIN, INPUT_PULLUP);
-  pinMode(SW_PIN, INPUT_PULLUP);
-
-  for (int8_t i = 0; i < NUMBER_OF_TRACKS; i++) {
-    pinMode(TRACK_PINS[i], INPUT_PULLUP);
-  }
-
-  for (int8_t i = 0; i < NUMBER_OF_PAGES; i++) {
-    pinMode(PAGE_PINS[i], INPUT_PULLUP);
-  }
-
-  init_display();
-  init_encoder();
-
-  load_settings(settings);
-  if (!settings.autoLoadSettings) {
-    reset_settings_to_default();
-  }
-}
-
-void loop() {
-  reset_state_to_default();
-
-  encoder_tick();
-
-  if (isMenuMode) {
-    handle_menu();
-    return;
-  } else if (is_encoder_clicked()) {
+void loop_main() {
+  if (is_encoder_clicked()) {
     isMenuMode = true;
+    return;
   }
 
   int8_t pIndex = get_pressed_page_button();
@@ -497,5 +492,16 @@ void loop() {
   }
 
   render_main(stateEvent);
+}
+
+void loop() {
+  reset_state_to_default();
+  encoder_tick();
+
+  if (isMenuMode) {
+    loop_menu();
+  } else {
+    loop_main();
+  }
 }
 

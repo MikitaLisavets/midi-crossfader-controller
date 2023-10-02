@@ -303,7 +303,7 @@ void render_resetting() {
   clear_display();
   reset_display();
   display.setScale(2);
-  display.println(F("Resetting..."));
+  display.println(F("Reset..."));
   refresh_display();
 }
 

@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION 1.05
+#define VERSION 1.06
 
 #define CLK_PIN 1
 #define DT_PIN 0
