@@ -61,40 +61,44 @@ void render_main(
   for (int8_t i = 0; i < NUMBER_OF_TRACKS; i++) {
     int8_t indexWithOffset = (trackOffset + i) % ALL_TRACKS;
 
-    if (stateEvent.trackIndex == (indexWithOffset) && !stateEvent.stageChanged && !stateEvent.midiValuesChanged && !stateEvent.midiValuesSwap) {
+    if (stateEvent.trackIndex == indexWithOffset && !stateEvent.stageChanged && !stateEvent.midiValuesChanged && !stateEvent.midiValuesSwap) {
       display.invertText(true);
     }
-    display.print((char)pgm_read_byte(&trackTitles[(indexWithOffset)]));
+    display.print((char)pgm_read_byte(&trackTitles[indexWithOffset]));
     if (stateEvent.pageChanged) {
       display.invertText(true);
     }
     display.print(pageIndex + 1);
     display.invertText(false);
     display.print(F(": "));
-    if ((stateEvent.trackIndex == (indexWithOffset) || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_LEFT) {
+    if ((stateEvent.trackIndex == indexWithOffset || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_LEFT) {
       display.invertText(true);
     }
-    display.print(settings.stageIndexes[SIDE_LEFT][pageIndex][(indexWithOffset)] + 1);
+    display.print(settings.stageIndexes[SIDE_LEFT][pageIndex][indexWithOffset] + 1);
     display.invertText(false);
     display.print(F("| "));
-    if (stateEvent.trackIndex == (indexWithOffset) && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_LEFT) || stateEvent.midiValuesSwap)) {
+    if (stateEvent.trackIndex == indexWithOffset && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_LEFT) || stateEvent.midiValuesSwap)) {
       display.invertText(true);
     }
-    render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][(indexWithOffset)][settings.stageIndexes[SIDE_LEFT][pageIndex][(indexWithOffset)]]);
+    render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.stageIndexes[SIDE_LEFT][pageIndex][indexWithOffset]]);
     display.invertText(false);
     display.print(F("<"));
-    display.print(F("-|-"));
+    if (stateEvent.trackIndex == indexWithOffset) {
+      render_filled_number(midiValues[pageIndex][indexWithOffset]);
+    } else {
+      display.print(F("-|-"));
+    }
     display.print(F(">"));
-    if (stateEvent.trackIndex == (indexWithOffset) && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
+    if (stateEvent.trackIndex == indexWithOffset && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
       display.invertText(true);
     }
-    render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][(indexWithOffset)][settings.stageIndexes[SIDE_RIGHT][pageIndex][(indexWithOffset)]]);
+    render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.stageIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]]);
     display.invertText(false);
     display.print(F(" |"));
-    if ((stateEvent.trackIndex == (indexWithOffset) || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_RIGHT) {
+    if ((stateEvent.trackIndex == indexWithOffset || stateEvent.trackIndex < 0) && stateEvent.stageChanged && stateEvent.side == SIDE_RIGHT) {
       display.invertText(true);
     }
-    display.print(settings.stageIndexes[SIDE_RIGHT][pageIndex][(indexWithOffset)] + 1);
+    display.print(settings.stageIndexes[SIDE_RIGHT][pageIndex][indexWithOffset] + 1);
     display.invertText(false);
     display.println(" ");
     if (i < NUMBER_OF_TRACKS - 1) {
