@@ -3,7 +3,7 @@
 #include <display.h>
 
 GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
-#define SCREEN_MENU_ROWS 7
+#define SCREEN_MENU_ROWS 6
 
 const char PROGMEM trackTitles[ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'};
 
@@ -12,9 +12,9 @@ void clear_display() {
 }
 
 void reset_display() {
+  display.home();
   display.setScale(1);
   display.invertText(false);
-  display.home();
 }
 
 void refresh_display() {
@@ -273,7 +273,6 @@ void render_menu() {
   reset_display();
   display.setCursor(30, 0);
   display.println(F("=== Menu ==="));
-  display.setCursor(0, 1);
   for (byte i = 0; i < SCREEN_MENU_ROWS; i++) {
     if (menuSelectedRow < SCREEN_MENU_ROWS) {
       render_row(i);

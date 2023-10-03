@@ -11,6 +11,8 @@ uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {6, 8, A2, A0};
 bool isMenuMode = false;
 bool isSubMenuActive = false;
 
+bool shouldScreenUpdate = false;
+
 uint8_t pageIndex = 0;
 int16_t potValue;
 int16_t faderValue = 0;
@@ -51,20 +53,28 @@ void reset_settings_to_default() {
         {{0}}
       },
       {
-        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-        {{127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}, {127, 127, 127, 127}},
-      }
+        {{0}}
+      },
     },
-    .ccValues = {
-      {1, 2, 3, 4, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-      {5, 6, 7, 8, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-      {9, 10, 11, 12, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
-      {13, 14, 15, 16, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64}
-    },
+    .ccValues = {{0}},
     .autoLoadSettings = false,
   };
+
+  for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
+      for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+          for (uint8_t k = 0; k < NUMBER_OF_STAGES; k++) {
+              settings.midiValues[1][i][j][k] = 127;
+          }
+      }
+  }
+
+  uint8_t count = 0;
+  for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
+    for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+      settings.ccValues[i][j] = count;
+      count++;
+    }
+  }
 }
 
 void reset_state_to_default() {
@@ -192,6 +202,9 @@ void setup() {
   if (!settings.autoLoadSettings) {
     reset_settings_to_default();
   }
+  reset_state_to_default();
+
+  render_main(stateEvent);
 }
 
 void loop_menu() {
@@ -404,6 +417,7 @@ void loop_menu() {
     } else {
       isMenuMode = false;
       menuSelectedRow = 0;
+      shouldScreenUpdate = true;
     }
     return;
   }
@@ -413,6 +427,7 @@ void loop_menu() {
     isSubMenuActive = false;
     isMenuMode = false;
     menuSelectedRow = 0;
+    shouldScreenUpdate = true;
     return;
   }
 
@@ -425,14 +440,18 @@ void loop_main() {
     return;
   }
 
+  bool wasAction = false;
+
   int8_t pIndex = get_pressed_page_button();
   int8_t tIndex = get_pressed_track_button();
 
   if (is_left_button_pressed() && is_right_button_pressed()) {
+    wasAction = true;
     if (is_button_pressed(tIndex)) {
       handle_midi_values_swap(tIndex);
     }
   } else if (is_left_button_pressed()) {
+    wasAction = true;
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
       handle_stage_change(pIndex, tIndex, SIDE_LEFT);
     } else if (is_button_pressed(pIndex)) {
@@ -441,6 +460,7 @@ void loop_main() {
       handle_midi_value_change(tIndex, SIDE_LEFT);
     }
   } else if (is_right_button_pressed()) {
+    wasAction = true;
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
       handle_stage_change(pIndex, tIndex, SIDE_RIGHT);
     } else if (is_button_pressed(pIndex)) {
@@ -449,11 +469,14 @@ void loop_main() {
       handle_midi_value_change(tIndex, SIDE_RIGHT);
     }
   } else if (is_button_pressed(tIndex)) {
+    wasAction = true;
     handle_track_press(tIndex);
   } else if (is_button_pressed(pIndex)) {
+    wasAction = true;
     handle_page_press(pIndex);
   } else {
     if (is_encoder_turned_left()) {
+      wasAction = true;
       if (trackOffset - 4 < 0) {
         trackOffset = ALL_TRACKS - 4;
       } else {
@@ -461,6 +484,7 @@ void loop_main() {
       }
     }
     if (is_encoder_turned_right()) {
+      wasAction = true;
       if (trackOffset + 4 >= ALL_TRACKS) {
         trackOffset = 0;
       } else {
@@ -485,13 +509,18 @@ void loop_main() {
     }
 
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
+      wasAction = true;
       control_change(settings.midiChannel, settings.ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
       previousMidiValues[pageIndex][trackIndex] = midiValues[pageIndex][trackIndex];
       send_midi();
     }
   }
 
-  render_main(stateEvent);
+  if (shouldScreenUpdate) {
+    render_main(stateEvent);
+  }
+
+  shouldScreenUpdate = wasAction;
 }
 
 void loop() {
