@@ -214,73 +214,17 @@ void loop_menu() {
       if (menuSelectedRow == MENU_SCROLL_FAST_SPEED) {
         settings.scrollFastSpeed = safe_midi_value(settings.scrollFastSpeed + 1);
       }
-      if (menuSelectedRow == MENU_A1_CC) { increase_cc_value(0, 0); }
-      if (menuSelectedRow == MENU_B1_CC) { increase_cc_value(0, 1); }
-      if (menuSelectedRow == MENU_C1_CC) { increase_cc_value(0, 2); }
-      if (menuSelectedRow == MENU_D1_CC) { increase_cc_value(0, 3); }
-      if (menuSelectedRow == MENU_E1_CC) { increase_cc_value(0, 4); }
-      if (menuSelectedRow == MENU_F1_CC) { increase_cc_value(0, 5); }
-      if (menuSelectedRow == MENU_G1_CC) { increase_cc_value(0, 6); }
-      if (menuSelectedRow == MENU_H1_CC) { increase_cc_value(0, 7); }
-      if (menuSelectedRow == MENU_I1_CC) { increase_cc_value(0, 8); }
-      if (menuSelectedRow == MENU_J1_CC) { increase_cc_value(0, 9); }
-      if (menuSelectedRow == MENU_K1_CC) { increase_cc_value(0, 10); }
-      if (menuSelectedRow == MENU_L1_CC) { increase_cc_value(0, 11); }
-      if (menuSelectedRow == MENU_M1_CC) { increase_cc_value(0, 12); }
-      if (menuSelectedRow == MENU_N1_CC) { increase_cc_value(0, 13); }
-      if (menuSelectedRow == MENU_O1_CC) { increase_cc_value(0, 14); }
-      if (menuSelectedRow == MENU_P1_CC) { increase_cc_value(0, 15); }
 
-      if (menuSelectedRow == MENU_A2_CC) { increase_cc_value(1, 0); }
-      if (menuSelectedRow == MENU_B2_CC) { increase_cc_value(1, 1); }
-      if (menuSelectedRow == MENU_C2_CC) { increase_cc_value(1, 2); }
-      if (menuSelectedRow == MENU_D2_CC) { increase_cc_value(1, 3); }
-      if (menuSelectedRow == MENU_E2_CC) { increase_cc_value(1, 4); }
-      if (menuSelectedRow == MENU_F2_CC) { increase_cc_value(1, 5); }
-      if (menuSelectedRow == MENU_G2_CC) { increase_cc_value(1, 6); }
-      if (menuSelectedRow == MENU_H2_CC) { increase_cc_value(1, 7); }
-      if (menuSelectedRow == MENU_I2_CC) { increase_cc_value(1, 8); }
-      if (menuSelectedRow == MENU_J2_CC) { increase_cc_value(1, 9); }
-      if (menuSelectedRow == MENU_K2_CC) { increase_cc_value(1, 10); }
-      if (menuSelectedRow == MENU_L2_CC) { increase_cc_value(1, 11); }
-      if (menuSelectedRow == MENU_M2_CC) { increase_cc_value(1, 12); }
-      if (menuSelectedRow == MENU_N2_CC) { increase_cc_value(1, 13); }
-      if (menuSelectedRow == MENU_O2_CC) { increase_cc_value(1, 14); }
-      if (menuSelectedRow == MENU_P2_CC) { increase_cc_value(1, 15); }
 
-      if (menuSelectedRow == MENU_A3_CC) { increase_cc_value(2, 0); }
-      if (menuSelectedRow == MENU_B3_CC) { increase_cc_value(2, 1); }
-      if (menuSelectedRow == MENU_C3_CC) { increase_cc_value(2, 2); }
-      if (menuSelectedRow == MENU_D3_CC) { increase_cc_value(2, 3); }
-      if (menuSelectedRow == MENU_E3_CC) { increase_cc_value(2, 4); }
-      if (menuSelectedRow == MENU_F3_CC) { increase_cc_value(2, 5); }
-      if (menuSelectedRow == MENU_G3_CC) { increase_cc_value(2, 6); }
-      if (menuSelectedRow == MENU_H3_CC) { increase_cc_value(2, 7); }
-      if (menuSelectedRow == MENU_I3_CC) { increase_cc_value(2, 8); }
-      if (menuSelectedRow == MENU_J3_CC) { increase_cc_value(2, 9); }
-      if (menuSelectedRow == MENU_K3_CC) { increase_cc_value(2, 10); }
-      if (menuSelectedRow == MENU_L3_CC) { increase_cc_value(2, 11); }
-      if (menuSelectedRow == MENU_M3_CC) { increase_cc_value(2, 12); }
-      if (menuSelectedRow == MENU_N3_CC) { increase_cc_value(2, 13); }
-      if (menuSelectedRow == MENU_O3_CC) { increase_cc_value(2, 14); }
-      if (menuSelectedRow == MENU_P3_CC) { increase_cc_value(2, 15); }
-
-      if (menuSelectedRow == MENU_A4_CC) { increase_cc_value(3, 0); }
-      if (menuSelectedRow == MENU_B4_CC) { increase_cc_value(3, 1); }
-      if (menuSelectedRow == MENU_C4_CC) { increase_cc_value(3, 2); }
-      if (menuSelectedRow == MENU_D4_CC) { increase_cc_value(3, 3); }
-      if (menuSelectedRow == MENU_E4_CC) { increase_cc_value(3, 4); }
-      if (menuSelectedRow == MENU_F4_CC) { increase_cc_value(3, 5); }
-      if (menuSelectedRow == MENU_G4_CC) { increase_cc_value(3, 6); }
-      if (menuSelectedRow == MENU_H4_CC) { increase_cc_value(3, 7); }
-      if (menuSelectedRow == MENU_I4_CC) { increase_cc_value(3, 8); }
-      if (menuSelectedRow == MENU_J4_CC) { increase_cc_value(3, 9); }
-      if (menuSelectedRow == MENU_K4_CC) { increase_cc_value(3, 10); }
-      if (menuSelectedRow == MENU_L4_CC) { increase_cc_value(3, 11); }
-      if (menuSelectedRow == MENU_M4_CC) { increase_cc_value(3, 12); }
-      if (menuSelectedRow == MENU_N4_CC) { increase_cc_value(3, 13); }
-      if (menuSelectedRow == MENU_O4_CC) { increase_cc_value(3, 14); }
-      if (menuSelectedRow == MENU_P4_CC) { increase_cc_value(3, 15); }
+      uint8_t count = MENU_CC;
+      for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
+        for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+          if (menuSelectedRow == count) {
+            increase_cc_value(i, j);
+          }
+          count++;
+        }
+      }
     } else {
       menuSelectedRow++;
       if (menuSelectedRow >= MAX_MENU_ROWS) {
@@ -304,73 +248,16 @@ void loop_menu() {
       if (menuSelectedRow == MENU_SCROLL_FAST_SPEED) {
         settings.scrollFastSpeed = safe_midi_value(settings.scrollFastSpeed - 1);
       }
-      if (menuSelectedRow == MENU_A1_CC) { decrease_cc_value(0, 0); }
-      if (menuSelectedRow == MENU_B1_CC) { decrease_cc_value(0, 1); }
-      if (menuSelectedRow == MENU_C1_CC) { decrease_cc_value(0, 2); }
-      if (menuSelectedRow == MENU_D1_CC) { decrease_cc_value(0, 3); }
-      if (menuSelectedRow == MENU_E1_CC) { decrease_cc_value(0, 4); }
-      if (menuSelectedRow == MENU_F1_CC) { decrease_cc_value(0, 5); }
-      if (menuSelectedRow == MENU_G1_CC) { decrease_cc_value(0, 6); }
-      if (menuSelectedRow == MENU_H1_CC) { decrease_cc_value(0, 7); }
-      if (menuSelectedRow == MENU_I1_CC) { decrease_cc_value(0, 8); }
-      if (menuSelectedRow == MENU_J1_CC) { decrease_cc_value(0, 9); }
-      if (menuSelectedRow == MENU_K1_CC) { decrease_cc_value(0, 10); }
-      if (menuSelectedRow == MENU_L1_CC) { decrease_cc_value(0, 11); }
-      if (menuSelectedRow == MENU_M1_CC) { decrease_cc_value(0, 12); }
-      if (menuSelectedRow == MENU_N1_CC) { decrease_cc_value(0, 13); }
-      if (menuSelectedRow == MENU_O1_CC) { decrease_cc_value(0, 14); }
-      if (menuSelectedRow == MENU_P1_CC) { decrease_cc_value(0, 15); }
 
-      if (menuSelectedRow == MENU_A2_CC) { decrease_cc_value(1, 0); }
-      if (menuSelectedRow == MENU_B2_CC) { decrease_cc_value(1, 1); }
-      if (menuSelectedRow == MENU_C2_CC) { decrease_cc_value(1, 2); }
-      if (menuSelectedRow == MENU_D2_CC) { decrease_cc_value(1, 3); }
-      if (menuSelectedRow == MENU_E2_CC) { decrease_cc_value(1, 4); }
-      if (menuSelectedRow == MENU_F2_CC) { decrease_cc_value(1, 5); }
-      if (menuSelectedRow == MENU_G2_CC) { decrease_cc_value(1, 6); }
-      if (menuSelectedRow == MENU_H2_CC) { decrease_cc_value(1, 7); }
-      if (menuSelectedRow == MENU_I2_CC) { decrease_cc_value(1, 8); }
-      if (menuSelectedRow == MENU_J2_CC) { decrease_cc_value(1, 9); }
-      if (menuSelectedRow == MENU_K2_CC) { decrease_cc_value(1, 10); }
-      if (menuSelectedRow == MENU_L2_CC) { decrease_cc_value(1, 11); }
-      if (menuSelectedRow == MENU_M2_CC) { decrease_cc_value(1, 12); }
-      if (menuSelectedRow == MENU_N2_CC) { decrease_cc_value(1, 13); }
-      if (menuSelectedRow == MENU_O2_CC) { decrease_cc_value(1, 14); }
-      if (menuSelectedRow == MENU_P2_CC) { decrease_cc_value(1, 15); }
-
-      if (menuSelectedRow == MENU_A3_CC) { decrease_cc_value(2, 0); }
-      if (menuSelectedRow == MENU_B3_CC) { decrease_cc_value(2, 1); }
-      if (menuSelectedRow == MENU_C3_CC) { decrease_cc_value(2, 2); }
-      if (menuSelectedRow == MENU_D3_CC) { decrease_cc_value(2, 3); }
-      if (menuSelectedRow == MENU_E3_CC) { decrease_cc_value(2, 4); }
-      if (menuSelectedRow == MENU_F3_CC) { decrease_cc_value(2, 5); }
-      if (menuSelectedRow == MENU_G3_CC) { decrease_cc_value(2, 6); }
-      if (menuSelectedRow == MENU_H3_CC) { decrease_cc_value(2, 7); }
-      if (menuSelectedRow == MENU_I3_CC) { decrease_cc_value(2, 8); }
-      if (menuSelectedRow == MENU_J3_CC) { decrease_cc_value(2, 9); }
-      if (menuSelectedRow == MENU_K3_CC) { decrease_cc_value(2, 10); }
-      if (menuSelectedRow == MENU_L3_CC) { decrease_cc_value(2, 11); }
-      if (menuSelectedRow == MENU_M3_CC) { decrease_cc_value(2, 12); }
-      if (menuSelectedRow == MENU_N3_CC) { decrease_cc_value(2, 13); }
-      if (menuSelectedRow == MENU_O3_CC) { decrease_cc_value(2, 14); }
-      if (menuSelectedRow == MENU_P3_CC) { decrease_cc_value(2, 15); }
-
-      if (menuSelectedRow == MENU_A4_CC) { decrease_cc_value(3, 0); }
-      if (menuSelectedRow == MENU_B4_CC) { decrease_cc_value(3, 1); }
-      if (menuSelectedRow == MENU_C4_CC) { decrease_cc_value(3, 2); }
-      if (menuSelectedRow == MENU_D4_CC) { decrease_cc_value(3, 3); }
-      if (menuSelectedRow == MENU_E4_CC) { decrease_cc_value(3, 4); }
-      if (menuSelectedRow == MENU_F4_CC) { decrease_cc_value(3, 5); }
-      if (menuSelectedRow == MENU_G4_CC) { decrease_cc_value(3, 6); }
-      if (menuSelectedRow == MENU_H4_CC) { decrease_cc_value(3, 7); }
-      if (menuSelectedRow == MENU_I4_CC) { decrease_cc_value(3, 8); }
-      if (menuSelectedRow == MENU_J4_CC) { decrease_cc_value(3, 9); }
-      if (menuSelectedRow == MENU_K4_CC) { decrease_cc_value(3, 10); }
-      if (menuSelectedRow == MENU_L4_CC) { decrease_cc_value(3, 11); }
-      if (menuSelectedRow == MENU_M4_CC) { decrease_cc_value(3, 12); }
-      if (menuSelectedRow == MENU_N4_CC) { decrease_cc_value(3, 13); }
-      if (menuSelectedRow == MENU_O4_CC) { decrease_cc_value(3, 14); }
-      if (menuSelectedRow == MENU_P4_CC) { decrease_cc_value(3, 15); }
+      uint8_t count = MENU_CC;
+      for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
+        for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+          if (menuSelectedRow == count) {
+            decrease_cc_value(i, j);
+          }
+          count++;
+        }
+      }
     } else {
       menuSelectedRow--;
       if (menuSelectedRow < 0) {
