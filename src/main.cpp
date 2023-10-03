@@ -40,7 +40,7 @@ void reset_settings_to_default() {
     .midiChannel = 0,
     .faderThreshold = 10,
     .scrollFastSpeed = 5,
-    .stageIndexes = {
+    .variantIndexes = {
       {
         {0},
       },
@@ -62,7 +62,7 @@ void reset_settings_to_default() {
 
   for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
       for (uint8_t j = 0; j < ALL_TRACKS; j++) {
-          for (uint8_t k = 0; k < NUMBER_OF_STAGES; k++) {
+          for (uint8_t k = 0; k < NUMBER_OF_VARIANTS; k++) {
               settings.midiValues[1][i][j][k] = 127;
           }
       }
@@ -80,7 +80,7 @@ void reset_settings_to_default() {
 void reset_state_to_default() {
   stateEvent = {
     .pageChanged = false,
-    .stageChanged = false,
+    .variantChanged = false,
     .midiValuesChanged = false,
     .midiValuesSwap = false,
     .trackIndex = -1,
@@ -99,28 +99,28 @@ void handle_page_press(uint8_t newPageIndex) {
   stateEvent.pageChanged = true;
 }
 
-void handle_stage_change(int8_t newStageIndex, int8_t trackIndex, side_t side) {
+void handle_variant_change(int8_t newvariantIndex, int8_t trackIndex, side_t side) {
   int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
 
   if (is_button_pressed(trackIndex)) {
     /*
       PAGE button and LEFT/RIGHT button and TRACK button are pressed:
-        - change left/right stage for track on current page
+        - change left/right variant for track on current page
     */
-    settings.stageIndexes[side][pageIndex][indexWithOffset] = newStageIndex;
+    settings.variantIndexes[side][pageIndex][indexWithOffset] = newvariantIndex;
     stateEvent.trackIndex = indexWithOffset;
   } else {
     /*
       PAGE button and LEFT/RIGHT button pressed:
-        - change left/right stage for all tracks on current page
+        - change left/right variant for all tracks on current page
     */
     for (int8_t tIndex = 0; tIndex < ALL_TRACKS; tIndex++) {
-      settings.stageIndexes[side][pageIndex][tIndex] = newStageIndex;
+      settings.variantIndexes[side][pageIndex][tIndex] = newvariantIndex;
     }
     stateEvent.trackIndex = -1;
   }
 
-  stateEvent.stageChanged = true;
+  stateEvent.variantChanged = true;
   stateEvent.side = side;
 }
 
@@ -148,12 +148,12 @@ void handle_midi_value_change(int8_t trackIndex, side_t side) {
   int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
 
   if (is_encoder_turned_right()) {
-    potValue = safe_midi_value(settings.midiValues[side][pageIndex][indexWithOffset][settings.stageIndexes[side][pageIndex][indexWithOffset]] + speed);
-    settings.midiValues[side][pageIndex][indexWithOffset][settings.stageIndexes[side][pageIndex][indexWithOffset]] = potValue;
+    potValue = safe_midi_value(settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] + speed);
+    settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] = potValue;
   }
   if (is_encoder_turned_left()) {
-    potValue = safe_midi_value(settings.midiValues[side][pageIndex][indexWithOffset][settings.stageIndexes[side][pageIndex][indexWithOffset]] - speed);
-    settings.midiValues[side][pageIndex][indexWithOffset][settings.stageIndexes[side][pageIndex][indexWithOffset]] = potValue;
+    potValue = safe_midi_value(settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] - speed);
+    settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] = potValue;
   }
 
   stateEvent.midiValuesChanged = true;
@@ -167,9 +167,9 @@ void handle_midi_values_swap(byte trackIndex) {
       - swap left and right midi values
   */
   int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
-  int8_t temp = settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.stageIndexes[SIDE_LEFT][pageIndex][indexWithOffset]];
-  settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.stageIndexes[SIDE_LEFT][pageIndex][indexWithOffset]] = settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.stageIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]];
-  settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.stageIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]] = temp;
+  int8_t temp = settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset]];
+  settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset]] = settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]];
+  settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]] = temp;
 
   stateEvent.midiValuesSwap = true;
   stateEvent.trackIndex = indexWithOffset;
@@ -462,10 +462,10 @@ void loop_main() {
   } else if (is_left_button_pressed()) {
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
       wasAction = true;
-      handle_stage_change(pIndex, tIndex, SIDE_LEFT);
+      handle_variant_change(pIndex, tIndex, SIDE_LEFT);
     } else if (is_button_pressed(pIndex)) {
       wasAction = true;
-      handle_stage_change(pIndex, -1, SIDE_LEFT);
+      handle_variant_change(pIndex, -1, SIDE_LEFT);
     } else if (is_button_pressed(tIndex)) {
       wasAction = true;
       handle_midi_value_change(tIndex, SIDE_LEFT);
@@ -473,10 +473,10 @@ void loop_main() {
   } else if (is_right_button_pressed()) {
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
       wasAction = true;
-      handle_stage_change(pIndex, tIndex, SIDE_RIGHT);
+      handle_variant_change(pIndex, tIndex, SIDE_RIGHT);
     } else if (is_button_pressed(pIndex)) {
       wasAction = true;
-      handle_stage_change(pIndex, -1, SIDE_RIGHT);
+      handle_variant_change(pIndex, -1, SIDE_RIGHT);
     } else if (is_button_pressed(tIndex)) {
       wasAction = true;
       handle_midi_value_change(tIndex, SIDE_RIGHT);
@@ -515,10 +515,10 @@ void loop_main() {
   }
 
   for (int8_t trackIndex = 0; trackIndex < ALL_TRACKS; trackIndex++) {
-    if (settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]] < settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]) {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 1023 - settings.faderThreshold, 0 + settings.faderThreshold, settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]], settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
+    if (settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]] < settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]]) {
+      midiValues[pageIndex][trackIndex] = map(faderValue, 1023 - settings.faderThreshold, 0 + settings.faderThreshold, settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]], settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
     } else {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 0 + settings.faderThreshold, 1023 - settings.faderThreshold, settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.stageIndexes[SIDE_LEFT][pageIndex][trackIndex]], settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.stageIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
+      midiValues[pageIndex][trackIndex] = map(faderValue, 0 + settings.faderThreshold, 1023 - settings.faderThreshold, settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]], settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
     }
 
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {

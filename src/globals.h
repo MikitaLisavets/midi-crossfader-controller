@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION 1.11
+#define VERSION 1.12
 
 #define CLK_PIN 1
 #define DT_PIN 0
@@ -16,7 +16,7 @@
 #define ALL_TRACKS 16
 #define NUMBER_OF_TRACKS 4
 #define NUMBER_OF_PAGES 4
-#define NUMBER_OF_STAGES 4
+#define NUMBER_OF_VARIANTS 4
 
 #define NUMBER_OF_SIDES 2
 
@@ -118,8 +118,8 @@ struct Settings {
   uint8_t midiChannel;
   uint8_t faderThreshold;
   uint8_t scrollFastSpeed;
-  uint8_t stageIndexes[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS];
-  uint8_t midiValues[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS][NUMBER_OF_STAGES];
+  uint8_t variantIndexes[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS];
+  uint8_t midiValues[NUMBER_OF_SIDES][NUMBER_OF_PAGES][ALL_TRACKS][NUMBER_OF_VARIANTS];
   uint8_t ccValues[NUMBER_OF_PAGES][ALL_TRACKS];
   bool autoLoadSettings;
 };
@@ -128,7 +128,7 @@ extern Settings settings;
 
 struct StateEvent {
   bool pageChanged;
-  bool stageChanged;
+  bool variantChanged;
   bool midiValuesChanged;
   bool midiValuesSwap;
   int8_t trackIndex;
