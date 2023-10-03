@@ -208,10 +208,13 @@ void setup() {
 }
 
 void loop_menu() {
+  bool wasAction = false;
+
   int8_t pIndex = get_pressed_page_button();
   int8_t tIndex = get_pressed_track_button();
 
   if (is_encoder_turned_right()) {
+    wasAction = true;
     if (isSubMenuActive) {
       if (menuSelectedRow == MENU_MIDI_CHANNEL) {
         settings.midiChannel = safe_midi_value(settings.midiChannel + 1);
@@ -301,6 +304,7 @@ void loop_menu() {
   }
 
   if (is_encoder_turned_left()) {
+    wasAction = true;
     if (isSubMenuActive) {
       if (menuSelectedRow == MENU_MIDI_CHANNEL) {
         settings.midiChannel = safe_midi_value(settings.midiChannel - 1);
@@ -390,6 +394,7 @@ void loop_menu() {
   }
 
   if (is_encoder_clicked() || is_right_button_pressed()) {
+    wasAction = true;
     if (menuSelectedRow == MENU_LOAD) {
       render_loading();
       load_settings(settings);
@@ -424,19 +429,24 @@ void loop_menu() {
 
 
   if (is_button_pressed(pIndex) || is_button_pressed(tIndex)) {
+    shouldScreenUpdate = true;
     isSubMenuActive = false;
     isMenuMode = false;
     menuSelectedRow = 0;
-    shouldScreenUpdate = true;
     return;
   }
 
-  render_menu();
+  if (shouldScreenUpdate) {
+    render_menu();
+  }
+
+  shouldScreenUpdate = wasAction;
 }
 
 void loop_main() {
   if (is_encoder_clicked()) {
     isMenuMode = true;
+    shouldScreenUpdate = true;
     return;
   }
 
@@ -446,26 +456,29 @@ void loop_main() {
   int8_t tIndex = get_pressed_track_button();
 
   if (is_left_button_pressed() && is_right_button_pressed()) {
-    wasAction = true;
     if (is_button_pressed(tIndex)) {
       handle_midi_values_swap(tIndex);
     }
   } else if (is_left_button_pressed()) {
-    wasAction = true;
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
+      wasAction = true;
       handle_stage_change(pIndex, tIndex, SIDE_LEFT);
     } else if (is_button_pressed(pIndex)) {
+      wasAction = true;
       handle_stage_change(pIndex, -1, SIDE_LEFT);
     } else if (is_button_pressed(tIndex)) {
+      wasAction = true;
       handle_midi_value_change(tIndex, SIDE_LEFT);
     }
   } else if (is_right_button_pressed()) {
-    wasAction = true;
     if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
+      wasAction = true;
       handle_stage_change(pIndex, tIndex, SIDE_RIGHT);
     } else if (is_button_pressed(pIndex)) {
+      wasAction = true;
       handle_stage_change(pIndex, -1, SIDE_RIGHT);
     } else if (is_button_pressed(tIndex)) {
+      wasAction = true;
       handle_midi_value_change(tIndex, SIDE_RIGHT);
     }
   } else if (is_button_pressed(tIndex)) {
