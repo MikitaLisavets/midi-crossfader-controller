@@ -2,10 +2,10 @@
 Arduino MIDIUSB controller with single slide potentiometer, keyboard buttons, rotary knob and OLED Screen
 
 ### GUI main screen
-<img width="500" alt="gui" src="https://user-images.githubusercontent.com/1909810/216604352-0bc00215-5cad-4788-85b3-54b8e47a1313.jpeg">
+<img width="500" alt="gui" src="https://github.com/MikitaLisavets/midi-crossfader/assets/1909810/ce60872c-4dc1-48ec-b29f-093b371772ce">
 
 ## Connection scheme
-<img width="500" alt="scheme" src="https://user-images.githubusercontent.com/1909810/214956119-4ba645f4-ac2d-4603-9f38-8516719e28dc.png">
+<img width="500" alt="scheme" src="https://github.com/MikitaLisavets/midi-crossfader/assets/1909810/43e1c34a-1768-436f-9a3a-0ce396f44e35">
 
-## Prototype
-<img width="500" alt="device" src="https://user-images.githubusercontent.com/1909810/214956691-ca016850-d611-449f-9ccc-500bcb2e5561.jpeg">
+## Demo
+https://www.youtube.com/watch?v=rZENf91epyk
