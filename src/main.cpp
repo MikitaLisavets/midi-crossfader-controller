@@ -40,22 +40,8 @@ void reset_settings_to_default() {
     .midiChannel = 0,
     .faderThreshold = 10,
     .scrollFastSpeed = 5,
-    .variantIndexes = {
-      {
-        {0},
-      },
-      {
-        {0},
-      }
-    },
-    .midiValues = {
-      {
-        {{0}}
-      },
-      {
-        {{0}}
-      },
-    },
+    .variantIndexes = {{{0}}, {{0}}},
+    .midiValues = {{{{0}}}, {{{0}}}},
     .ccValues = {{0}},
     .autoLoadSettings = false,
   };
