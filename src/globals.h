@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION 1.15
+#define VERSION 1.16
 
 #define CLK_PIN 1
 #define DT_PIN 0
@@ -36,10 +36,10 @@ extern int8_t menuSelectedRow;
 extern int8_t trackOffset;
 
 enum menu_t : uint8_t {
-  MENU_LOAD = 0,
+  MENU_AUTO_LOAD_SETTINGS = 0,
+  MENU_LOAD,
   MENU_SAVE,
   MENU_RESET,
-  MENU_AUTO_LOAD_SETTINGS,
   MENU_FADER_THRESHOLD,
   MENU_MIDI_CHANNEL,
   MENU_SCROLL_FAST_SPEED,
