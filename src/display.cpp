@@ -5,7 +5,7 @@
 GyverOLED<SSD1306_128x64, OLED_NO_BUFFER> display;
 #define SCREEN_MENU_ROWS 7
 
-const char PROGMEM trackTitles[ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'};
+const char PROGMEM trackTitles[NUMBER_OF_ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P' };
 
 void clear_display() {
   display.clear();
@@ -58,8 +58,8 @@ void render_main(
 ) {
   reset_display();
 
-  for (int8_t i = 0; i < NUMBER_OF_TRACKS; i++) {
-    int8_t indexWithOffset = (trackOffset + i) % ALL_TRACKS;
+  for (int8_t i = 0; i < NUMBER_OF_TRACKS_ON_SCREEN; i++) {
+    int8_t indexWithOffset = (trackOffset + i) % NUMBER_OF_ALL_TRACKS;
 
     if (stateEvent.trackIndex == indexWithOffset && !stateEvent.variantChanged && !stateEvent.midiValuesChanged && !stateEvent.midiValuesSwap) {
       display.invertText(true);
@@ -101,12 +101,12 @@ void render_main(
     display.print(settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset] + 1);
     display.invertText(false);
     display.println(" ");
-    if (i < NUMBER_OF_TRACKS - 1) {
+    if (i < NUMBER_OF_TRACKS_ON_SCREEN - 1) {
       display.println(F("----------------------"));
     } else {
       display.print(F("_________"));
-      for (int8_t j = 0; j < ALL_TRACKS / NUMBER_OF_TRACKS; j++) {
-        if (j ==  trackOffset / NUMBER_OF_TRACKS) {
+      for (int8_t j = 0; j < NUMBER_OF_ALL_TRACKS / NUMBER_OF_TRACKS_ON_SCREEN; j++) {
+        if (j ==  trackOffset / NUMBER_OF_TRACKS_ON_SCREEN) {
           display.print(F("*"));
         } else {
           display.print(F("."));
@@ -200,7 +200,7 @@ void render_row(int8_t rowIndex) {
     default:
       uint8_t count = MENU_CC;
       for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
-        for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+        for (uint8_t j = 0; j < NUMBER_OF_ALL_TRACKS; j++) {
           if (rowIndex == count) {
              render_row_track_cc(i, j, hasActiveSubMenu);
           }

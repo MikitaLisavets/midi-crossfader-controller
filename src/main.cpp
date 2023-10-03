@@ -5,10 +5,10 @@
 
 // === Initialize variables ===
 
-uint8_t TRACK_PINS[NUMBER_OF_TRACKS] = {5, 7, 9, A1};
+uint8_t TRACK_PINS[NUMBER_OF_TRACKS_ON_SCREEN] = {5, 7, 9, A1};
 uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {6, 8, A2, A0};
 
-bool isMenuMode = false;
+bool isMenuActive = false;
 bool isSubMenuActive = false;
 
 bool shouldScreenUpdate = false;
@@ -23,11 +23,11 @@ Settings settings;
 
 StateEvent stateEvent;
 
-uint8_t midiValues[NUMBER_OF_PAGES][ALL_TRACKS] = {
+uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_ALL_TRACKS] = {
   {0}
 };
 
-uint8_t previousMidiValues[NUMBER_OF_PAGES][ALL_TRACKS] = {
+uint8_t previousMidiValues[NUMBER_OF_PAGES][NUMBER_OF_ALL_TRACKS] = {
   {0}
 };
 
@@ -47,7 +47,7 @@ void reset_settings_to_default() {
   };
 
   for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
-      for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+      for (uint8_t j = 0; j < NUMBER_OF_ALL_TRACKS; j++) {
           for (uint8_t k = 0; k < NUMBER_OF_VARIANTS; k++) {
               settings.midiValues[1][i][j][k] = 127;
           }
@@ -56,7 +56,7 @@ void reset_settings_to_default() {
 
   uint8_t count = 0;
   for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
-    for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+    for (uint8_t j = 0; j < NUMBER_OF_ALL_TRACKS; j++) {
       settings.ccValues[i][j] = count;
       count++;
     }
@@ -86,7 +86,7 @@ void handle_page_press(uint8_t newPageIndex) {
 }
 
 void handle_variant_change(int8_t newvariantIndex, int8_t trackIndex, side_t side) {
-  int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
+  int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
 
   if (is_button_pressed(trackIndex)) {
     /*
@@ -100,7 +100,7 @@ void handle_variant_change(int8_t newvariantIndex, int8_t trackIndex, side_t sid
       PAGE button and LEFT/RIGHT button pressed:
         - change left/right variant for all tracks on current page
     */
-    for (int8_t tIndex = 0; tIndex < ALL_TRACKS; tIndex++) {
+    for (int8_t tIndex = 0; tIndex < NUMBER_OF_ALL_TRACKS; tIndex++) {
       settings.variantIndexes[side][pageIndex][tIndex] = newvariantIndex;
     }
     stateEvent.trackIndex = -1;
@@ -116,7 +116,7 @@ void handle_track_press(byte trackIndex) {
       - send midi event to learn with current value
   */
 
-  int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
+  int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
 
 
   control_change(settings.midiChannel, settings.ccValues[pageIndex][indexWithOffset], midiValues[pageIndex][indexWithOffset]);
@@ -131,7 +131,7 @@ void handle_midi_value_change(int8_t trackIndex, side_t side) {
       listen to POT and change left/right midi value
   */
   int8_t speed = is_encoder_turned_fast() ? settings.scrollFastSpeed : 1;
-  int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
+  int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
 
   if (is_encoder_turned_right()) {
     potValue = safe_midi_value(settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] + speed);
@@ -152,7 +152,7 @@ void handle_midi_values_swap(byte trackIndex) {
     TRACK button and LEFT or RIGHT button pressed and POT button are pressed:
       - swap left and right midi values
   */
-  int8_t indexWithOffset = (trackOffset + trackIndex) % ALL_TRACKS;
+  int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
   int8_t temp = settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset]];
   settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset]] = settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]];
   settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]] = temp;
@@ -173,7 +173,7 @@ void setup() {
   pinMode(RIGHT_PIN, INPUT_PULLUP);
   pinMode(SW_PIN, INPUT_PULLUP);
 
-  for (int8_t i = 0; i < NUMBER_OF_TRACKS; i++) {
+  for (int8_t i = 0; i < NUMBER_OF_TRACKS_ON_SCREEN; i++) {
     pinMode(TRACK_PINS[i], INPUT_PULLUP);
   }
 
@@ -218,7 +218,7 @@ void loop_menu() {
 
       uint8_t count = MENU_CC;
       for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
-        for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+        for (uint8_t j = 0; j < NUMBER_OF_ALL_TRACKS; j++) {
           if (menuSelectedRow == count) {
             increase_cc_value(i, j);
           }
@@ -251,7 +251,7 @@ void loop_menu() {
 
       uint8_t count = MENU_CC;
       for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
-        for (uint8_t j = 0; j < ALL_TRACKS; j++) {
+        for (uint8_t j = 0; j < NUMBER_OF_ALL_TRACKS; j++) {
           if (menuSelectedRow == count) {
             decrease_cc_value(i, j);
           }
@@ -293,7 +293,7 @@ void loop_menu() {
       render_menu();
       delay(CLICK_TIMEOUT);
     } else {
-      isMenuMode = false;
+      isMenuActive = false;
       menuSelectedRow = 0;
       shouldScreenUpdate = true;
     }
@@ -304,7 +304,7 @@ void loop_menu() {
   if (is_button_pressed(pIndex) || is_button_pressed(tIndex)) {
     shouldScreenUpdate = true;
     isSubMenuActive = false;
-    isMenuMode = false;
+    isMenuActive = false;
     menuSelectedRow = 0;
     return;
   }
@@ -318,7 +318,7 @@ void loop_menu() {
 
 void loop_main() {
   if (is_encoder_clicked()) {
-    isMenuMode = true;
+    isMenuActive = true;
     shouldScreenUpdate = true;
     return;
   }
@@ -364,14 +364,14 @@ void loop_main() {
     if (is_encoder_turned_left()) {
       wasAction = true;
       if (trackOffset - 4 < 0) {
-        trackOffset = ALL_TRACKS - 4;
+        trackOffset = NUMBER_OF_ALL_TRACKS - 4;
       } else {
         trackOffset = trackOffset - 4;
       }
     }
     if (is_encoder_turned_right()) {
       wasAction = true;
-      if (trackOffset + 4 >= ALL_TRACKS) {
+      if (trackOffset + 4 >= NUMBER_OF_ALL_TRACKS) {
         trackOffset = 0;
       } else {
         trackOffset = trackOffset + 4;
@@ -387,7 +387,7 @@ void loop_main() {
     faderValue = 0 + settings.faderThreshold;
   }
 
-  for (int8_t trackIndex = 0; trackIndex < ALL_TRACKS; trackIndex++) {
+  for (int8_t trackIndex = 0; trackIndex < NUMBER_OF_ALL_TRACKS; trackIndex++) {
     if (settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]] < settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]]) {
       midiValues[pageIndex][trackIndex] = map(faderValue, 1023 - settings.faderThreshold, 0 + settings.faderThreshold, settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]], settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
     } else {
@@ -412,7 +412,7 @@ void loop() {
   reset_state_to_default();
   encoder_tick();
 
-  if (isMenuMode) {
+  if (isMenuActive) {
     loop_menu();
   } else {
     loop_main();

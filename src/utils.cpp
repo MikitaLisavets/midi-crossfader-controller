@@ -70,7 +70,7 @@ bool is_button_pressed(int8_t buttonIndex) {
 }
 
 int8_t get_pressed_track_button() {
-  for (int8_t trackIndex = 0; trackIndex < NUMBER_OF_TRACKS; trackIndex++) {
+  for (int8_t trackIndex = 0; trackIndex < NUMBER_OF_TRACKS_ON_SCREEN; trackIndex++) {
     if (digitalRead(TRACK_PINS[trackIndex]) == LOW ) {
       return trackIndex;
     }
