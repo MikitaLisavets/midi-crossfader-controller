@@ -2,8 +2,8 @@
 #include <GyverOLED.h> // Source: https://github.com/GyverLibs/GyverOLED
 #include <display.h>
 
-GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
-#define SCREEN_MENU_ROWS 6
+GyverOLED<SSD1306_128x64, OLED_NO_BUFFER> display;
+#define SCREEN_MENU_ROWS 7
 
 const char PROGMEM trackTitles[ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'};
 
@@ -15,10 +15,6 @@ void reset_display() {
   display.home();
   display.setScale(1);
   display.invertText(false);
-}
-
-void refresh_display() {
-  display.update();
 }
 
 void render_filled_number(uint8_t num) {
@@ -38,24 +34,22 @@ void render_init_screen() {
   display.setCursor(0, 7);
   display.print(F("Version: "));
   display.print(VERSION);
-  refresh_display();
 
   display.setScale(2);
   display.setCursor(25, 1);
   display.print(F("X"));
-  refresh_display();
+  delay(100);
   display.print(F("-"));
-  refresh_display();
+  delay(100);
   display.print(F("F"));
-  refresh_display();
+  delay(100);
   display.print(F("a"));
-  refresh_display();
+  delay(100);
   display.print(F("d"));
-  refresh_display();
+  delay(100);
   display.print(F("e"));
-  refresh_display();
+  delay(100);
   display.print(F("r"));
-  refresh_display();
   delay(300);
 }
 
@@ -89,7 +83,7 @@ void render_main(
     render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][(indexWithOffset)][settings.stageIndexes[SIDE_LEFT][pageIndex][(indexWithOffset)]]);
     display.invertText(false);
     display.print(F("<"));
-    render_filled_number(midiValues[pageIndex][(indexWithOffset)]);
+    display.print(F("-|-"));
     display.print(F(">"));
     if (stateEvent.trackIndex == (indexWithOffset) && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
       display.invertText(true);
@@ -102,7 +96,7 @@ void render_main(
     }
     display.print(settings.stageIndexes[SIDE_RIGHT][pageIndex][(indexWithOffset)] + 1);
     display.invertText(false);
-    display.println();
+    display.println(" ");
     if (i < NUMBER_OF_TRACKS - 1) {
       display.println(F("----------------------"));
     } else {
@@ -118,21 +112,20 @@ void render_main(
     }
   }
 
-  refresh_display();
 }
 
 // === Menu ===
 
 void render_row_load() {
-  display.println(F("Load Settings"));
+  display.print(F("Load Settings"));
 }
 
 void render_row_save() {
-  display.println(F("Save Settings"));
+  display.print(F("Save Settings"));
 }
 
 void render_row_reset() {
-  display.println(F("Reset Settings"));
+  display.print(F("Reset Settings"));
 }
 
 void render_row_midi_channel(bool hasActiveSubMenu) {
@@ -140,7 +133,7 @@ void render_row_midi_channel(bool hasActiveSubMenu) {
   if (hasActiveSubMenu) {
     display.invertText(true);
   }
-  display.println(settings.midiChannel);
+  display.print(settings.midiChannel);
 
 }
 
@@ -149,7 +142,7 @@ void render_row_fader_threshold(bool hasActiveSubMenu) {
   if (hasActiveSubMenu) {
     display.invertText(true);
   }
-  display.println(settings.faderThreshold);
+  display.print(settings.faderThreshold);
 }
 
 void render_row_scroll_fast_speed(bool hasActiveSubMenu) {
@@ -157,7 +150,7 @@ void render_row_scroll_fast_speed(bool hasActiveSubMenu) {
   if (hasActiveSubMenu) {
     display.invertText(true);
   }
-  display.println(settings.scrollFastSpeed);
+  display.print(settings.scrollFastSpeed);
 }
 
 void render_row_auto_load_settings(bool hasActiveSubMenu) {
@@ -166,9 +159,9 @@ void render_row_auto_load_settings(bool hasActiveSubMenu) {
     display.invertText(true);
   }
   if (settings.autoLoadSettings) {
-    display.println(F("Yes"));
+    display.print(F("Yes"));
   } else {
-    display.println(F("No"));
+    display.print(F("No"));
   }
 }
 
@@ -180,7 +173,7 @@ void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex, bool hasActiveSu
   if (hasActiveSubMenu) {
     display.invertText(true);
   }
-  display.println(settings.ccValues[pageIndex][trackIndex]);
+  display.print(settings.ccValues[pageIndex][trackIndex]);
 }
 
 void render_row(int8_t rowIndex) {
@@ -269,18 +262,16 @@ void render_row(int8_t rowIndex) {
 }
 
 void render_menu() {
-  clear_display();
   reset_display();
-  display.setCursor(30, 0);
-  display.println(F("=== Menu ==="));
+  display.println(F("======== Menu ========"));
   for (byte i = 0; i < SCREEN_MENU_ROWS; i++) {
     if (menuSelectedRow < SCREEN_MENU_ROWS) {
       render_row(i);
     } else {
       render_row(menuSelectedRow - SCREEN_MENU_ROWS + 1 + i);
     }
+    display.println(F("                    "));
   }
-  refresh_display();
 }
 
 void render_loading() {
@@ -289,7 +280,6 @@ void render_loading() {
   display.setScale(2);
   display.setCursor(0, 3);
   display.println(F("Loading..."));
-  refresh_display();
 }
 
 void render_saving() {
@@ -298,7 +288,6 @@ void render_saving() {
   display.setScale(2);
   display.setCursor(0, 3);
   display.println(F("Saving..."));
-  refresh_display();
 }
 
 void render_resetting() {
@@ -307,7 +296,6 @@ void render_resetting() {
   display.setScale(2);
   display.setCursor(0, 3);
   display.println(F("Reset..."));
-  refresh_display();
 }
 
 void init_display() {

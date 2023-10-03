@@ -509,7 +509,6 @@ void loop_main() {
     }
 
     if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
-      wasAction = true;
       control_change(settings.midiChannel, settings.ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
       previousMidiValues[pageIndex][trackIndex] = midiValues[pageIndex][trackIndex];
       send_midi();
