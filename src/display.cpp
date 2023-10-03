@@ -173,9 +173,10 @@ void render_row_auto_load_settings(bool hasActiveSubMenu) {
 }
 
 void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex, bool hasActiveSubMenu) {
+  display.print(F("Control Change "));
   display.print((char)pgm_read_byte(&trackTitles[trackIndex]));
   display.print(pageIndex + 1);
-  display.print(F(" CC: "));
+  display.print(F(": "));
   if (hasActiveSubMenu) {
     display.invertText(true);
   }
@@ -287,6 +288,7 @@ void render_loading() {
   clear_display();
   reset_display();
   display.setScale(2);
+  display.setCursor(0, 3);
   display.println(F("Loading..."));
   refresh_display();
 }
@@ -295,6 +297,7 @@ void render_saving() {
   clear_display();
   reset_display();
   display.setScale(2);
+  display.setCursor(0, 3);
   display.println(F("Saving..."));
   refresh_display();
 }
@@ -303,6 +306,7 @@ void render_resetting() {
   clear_display();
   reset_display();
   display.setScale(2);
+  display.setCursor(0, 3);
   display.println(F("Reset..."));
   refresh_display();
 }
