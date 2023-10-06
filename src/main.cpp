@@ -315,6 +315,7 @@ void loop_menu() {
 void loop_main() {
   if (is_left_button_pressed() && is_right_button_pressed()) {
     if (is_button_pressed(pressedTrackButtonIndex)) {
+      wasAction = true;
       handle_midi_values_swap(pressedTrackButtonIndex);
     }
   } else if (is_left_button_pressed()) {
