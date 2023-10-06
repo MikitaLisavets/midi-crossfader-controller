@@ -125,6 +125,21 @@ void handle_track_press(byte trackIndex) {
   stateEvent.trackIndex = indexWithOffset;
 }
 
+void handle_midi_random_value(int8_t trackIndex, side_t side) {
+  /*
+    TRACK button and LEFT/RIGHT button pressed and POT pressed:
+      change left/right midi value to random value
+  */
+
+  int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
+
+  settings.midiValues[side][currentPage][indexWithOffset][settings.variantIndexes[side][currentPage][indexWithOffset]] = random(128);
+
+  stateEvent.midiValuesChanged = true;
+  stateEvent.trackIndex = indexWithOffset;
+  stateEvent.side = side;
+}
+
 void handle_midi_value_change(int8_t trackIndex, side_t side) {
   /*
     TRACK button and LEFT/RIGHT button pressed:
@@ -323,6 +338,9 @@ void main_controls() {
       return handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_LEFT);
     } else if (is_button_pressed(pressedPageButtonIndex)) {
       return handle_variant_change(pressedPageButtonIndex, -1, SIDE_LEFT);
+    } else if (is_button_pressed(pressedTrackButtonIndex) && is_encoder_clicked()) {
+      wasAction = true;
+      return handle_midi_random_value(pressedTrackButtonIndex, SIDE_LEFT);
     } else if (is_button_pressed(pressedTrackButtonIndex)) {
       return handle_midi_value_change(pressedTrackButtonIndex, SIDE_LEFT);
     }
@@ -331,6 +349,9 @@ void main_controls() {
       return handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_RIGHT);
     } else if (is_button_pressed(pressedPageButtonIndex)) {
       return handle_variant_change(pressedPageButtonIndex, -1, SIDE_RIGHT);
+    } else if (is_button_pressed(pressedTrackButtonIndex) && is_encoder_clicked()) {
+      wasAction = true;
+      return handle_midi_random_value(pressedTrackButtonIndex, SIDE_RIGHT);
     } else if (is_button_pressed(pressedTrackButtonIndex)) {
       return handle_midi_value_change(pressedTrackButtonIndex, SIDE_RIGHT);
     }
@@ -414,7 +435,7 @@ void loop() {
   if (isMenuActive) {
     loop_menu();
   } else {
-    if (is_encoder_clicked()) {
+    if (!is_button_pressed(pressedTrackButtonIndex) && !is_button_pressed(pressedPageButtonIndex) && !is_left_button_pressed() && !is_right_button_pressed() && is_encoder_clicked()) {
       isMenuActive = true;
       shouldScreenUpdate = true;
     } else {
