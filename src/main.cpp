@@ -312,32 +312,32 @@ void loop_menu() {
   }
 }
 
-void loop_main() {
+void main_controls() {
   if (is_left_button_pressed() && is_right_button_pressed()) {
     if (is_button_pressed(pressedTrackButtonIndex)) {
       wasAction = true;
-      handle_midi_values_swap(pressedTrackButtonIndex);
+      return handle_midi_values_swap(pressedTrackButtonIndex);
     }
   } else if (is_left_button_pressed()) {
     if (is_button_pressed(pressedTrackButtonIndex) && is_button_pressed(pressedPageButtonIndex)) {
-      handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_LEFT);
+      return handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_LEFT);
     } else if (is_button_pressed(pressedPageButtonIndex)) {
-      handle_variant_change(pressedPageButtonIndex, -1, SIDE_LEFT);
+      return handle_variant_change(pressedPageButtonIndex, -1, SIDE_LEFT);
     } else if (is_button_pressed(pressedTrackButtonIndex)) {
-      handle_midi_value_change(pressedTrackButtonIndex, SIDE_LEFT);
+      return handle_midi_value_change(pressedTrackButtonIndex, SIDE_LEFT);
     }
   } else if (is_right_button_pressed()) {
     if (is_button_pressed(pressedTrackButtonIndex) && is_button_pressed(pressedPageButtonIndex)) {
-      handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_RIGHT);
+      return handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_RIGHT);
     } else if (is_button_pressed(pressedPageButtonIndex)) {
-      handle_variant_change(pressedPageButtonIndex, -1, SIDE_RIGHT);
+      return handle_variant_change(pressedPageButtonIndex, -1, SIDE_RIGHT);
     } else if (is_button_pressed(pressedTrackButtonIndex)) {
-      handle_midi_value_change(pressedTrackButtonIndex, SIDE_RIGHT);
+      return handle_midi_value_change(pressedTrackButtonIndex, SIDE_RIGHT);
     }
   } else if (is_button_pressed(pressedTrackButtonIndex)) {
-    handle_track_press(pressedTrackButtonIndex);
+    return handle_track_press(pressedTrackButtonIndex);
   } else if (is_button_pressed(pressedPageButtonIndex)) {
-    handle_page_press(pressedPageButtonIndex);
+    return handle_page_press(pressedPageButtonIndex);
   } else {
     if (is_encoder_turned_left()) {
       wasAction = true;
@@ -356,6 +356,10 @@ void loop_main() {
       }
     }
   }
+}
+
+void loop_main() {
+  main_controls();
 
   int16_t faderValue = analogRead(FADER_PIN);
 
@@ -427,6 +431,10 @@ void loop() {
   }
 
   shouldScreenUpdate = wasAction;
+
+  if (stateEvent.midiValuesSwap) {
+    delay(CLICK_TIMEOUT);
+  }
 
   #ifndef PERFOMANCE_CHECK
     Serial.println(micros() - perfomanceTimer);

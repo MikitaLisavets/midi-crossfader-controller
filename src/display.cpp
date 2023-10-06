@@ -58,7 +58,7 @@ void render_init_screen() {
 
   display.print(F("r"));
   display.update();
-  delay(300);
+  delay(CLICK_TIMEOUT);
 }
 
 void render_main(
