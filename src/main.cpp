@@ -5,8 +5,8 @@
 
 // === Initialize variables ===
 
-uint8_t TRACK_PINS[NUMBER_OF_TRACKS_ON_SCREEN] = {5, 7, 9, A1};
-uint8_t PAGE_PINS[NUMBER_OF_PAGES] = {6, 8, A2, A0};
+uint8_t const TRACK_PINS[NUMBER_OF_TRACKS_ON_SCREEN] = {5, 7, 9, A1};
+uint8_t const PAGE_PINS[NUMBER_OF_PAGES] = {6, 8, A2, A0};
 
 bool isMenuActive = false;
 bool isSubMenuActive = false;
@@ -14,11 +14,13 @@ bool isSubMenuActive = false;
 bool shouldScreenUpdate = false;
 bool wasAction = false;
 
-uint8_t pageIndex = 0;
-int16_t potValue;
-int16_t faderValue = 0;
-int8_t menuSelectedRow = 0;
+uint8_t currentPage = 0;
+int8_t selectedMenuRow = 0;
 int8_t trackOffset = 0;
+
+int8_t pressedTrackButtonIndex;
+int8_t pressedPageButtonIndex;
+side_t pressedSideButtonIndex;
 
 Settings settings;
 
@@ -28,9 +30,6 @@ uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_ALL_TRACKS] = {
   {0}
 };
 
-uint8_t previousMidiValues[NUMBER_OF_PAGES][NUMBER_OF_ALL_TRACKS] = {
-  {0}
-};
 
 // ============================
 
@@ -40,7 +39,7 @@ void reset_settings_to_default() {
   settings = {
     .midiChannel = 0,
     .faderThreshold = 10,
-    .scrollFastSpeed = 5,
+    .scrollFastSpeed = 10,
     .variantIndexes = {{{0}}, {{0}}},
     .midiValues = {{{{0}}}, {{{0}}}},
     .ccValues = {{0}},
@@ -71,7 +70,7 @@ void reset_state_to_default() {
     .midiValuesChanged = false,
     .midiValuesSwap = false,
     .trackIndex = -1,
-    .side = SIDE_LEFT
+    .side = SIDE_NONE
   };
 }
 
@@ -81,12 +80,12 @@ void handle_page_press(uint8_t newPageIndex) {
       - change page index
   */
 
-  pageIndex = newPageIndex;
+  currentPage = newPageIndex;
 
   stateEvent.pageChanged = true;
 }
 
-void handle_variant_change(int8_t newvariantIndex, int8_t trackIndex, side_t side) {
+void handle_variant_change(int8_t newVariantIndex, int8_t trackIndex, side_t side) {
   int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
 
   if (is_button_pressed(trackIndex)) {
@@ -94,7 +93,7 @@ void handle_variant_change(int8_t newvariantIndex, int8_t trackIndex, side_t sid
       PAGE button and LEFT/RIGHT button and TRACK button are pressed:
         - change left/right variant for track on current page
     */
-    settings.variantIndexes[side][pageIndex][indexWithOffset] = newvariantIndex;
+    settings.variantIndexes[side][currentPage][indexWithOffset] = newVariantIndex;
     stateEvent.trackIndex = indexWithOffset;
   } else {
     /*
@@ -102,7 +101,7 @@ void handle_variant_change(int8_t newvariantIndex, int8_t trackIndex, side_t sid
         - change left/right variant for all tracks on current page
     */
     for (int8_t tIndex = 0; tIndex < NUMBER_OF_ALL_TRACKS; tIndex++) {
-      settings.variantIndexes[side][pageIndex][tIndex] = newvariantIndex;
+      settings.variantIndexes[side][currentPage][tIndex] = newVariantIndex;
     }
     stateEvent.trackIndex = -1;
   }
@@ -120,7 +119,7 @@ void handle_track_press(byte trackIndex) {
   int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
 
 
-  control_change(settings.midiChannel, settings.ccValues[pageIndex][indexWithOffset], midiValues[pageIndex][indexWithOffset]);
+  control_change(settings.midiChannel, settings.ccValues[currentPage][indexWithOffset], midiValues[currentPage][indexWithOffset]);
   send_midi();
 
   stateEvent.trackIndex = indexWithOffset;
@@ -133,14 +132,17 @@ void handle_midi_value_change(int8_t trackIndex, side_t side) {
   */
   int8_t speed = is_encoder_turned_fast() ? settings.scrollFastSpeed : 1;
   int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
+  int16_t potValue;
 
   if (is_encoder_turned_right()) {
-    potValue = safe_midi_value(settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] + speed);
-    settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] = potValue;
+    wasAction = true;
+    potValue = safe_midi_value(settings.midiValues[side][currentPage][indexWithOffset][settings.variantIndexes[side][currentPage][indexWithOffset]] + speed);
+    settings.midiValues[side][currentPage][indexWithOffset][settings.variantIndexes[side][currentPage][indexWithOffset]] = potValue;
   }
   if (is_encoder_turned_left()) {
-    potValue = safe_midi_value(settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] - speed);
-    settings.midiValues[side][pageIndex][indexWithOffset][settings.variantIndexes[side][pageIndex][indexWithOffset]] = potValue;
+    wasAction = true;
+    potValue = safe_midi_value(settings.midiValues[side][currentPage][indexWithOffset][settings.variantIndexes[side][currentPage][indexWithOffset]] - speed);
+    settings.midiValues[side][currentPage][indexWithOffset][settings.variantIndexes[side][currentPage][indexWithOffset]] = potValue;
   }
 
   stateEvent.midiValuesChanged = true;
@@ -154,9 +156,9 @@ void handle_midi_values_swap(byte trackIndex) {
       - swap left and right midi values
   */
   int8_t indexWithOffset = (trackOffset + trackIndex) % NUMBER_OF_ALL_TRACKS;
-  int8_t temp = settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset]];
-  settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset]] = settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]];
-  settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]] = temp;
+  int8_t temp = settings.midiValues[SIDE_LEFT][currentPage][indexWithOffset][settings.variantIndexes[SIDE_LEFT][currentPage][indexWithOffset]];
+  settings.midiValues[SIDE_LEFT][currentPage][indexWithOffset][settings.variantIndexes[SIDE_LEFT][currentPage][indexWithOffset]] = settings.midiValues[SIDE_RIGHT][currentPage][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][currentPage][indexWithOffset]];
+  settings.midiValues[SIDE_RIGHT][currentPage][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][currentPage][indexWithOffset]] = temp;
 
   stateEvent.midiValuesSwap = true;
   stateEvent.trackIndex = indexWithOffset;
@@ -199,22 +201,19 @@ void setup() {
 }
 
 void loop_menu() {
-  int8_t pIndex = get_pressed_page_button();
-  int8_t tIndex = get_pressed_track_button();
-
   if (is_encoder_turned_right()) {
     wasAction = true;
     if (isSubMenuActive) {
-      if (menuSelectedRow == MENU_MIDI_CHANNEL) {
+      if (selectedMenuRow == MENU_MIDI_CHANNEL) {
         settings.midiChannel = safe_midi_value(settings.midiChannel + 1);
       }
-      if (menuSelectedRow == MENU_FADER_THRESHOLD) {
+      if (selectedMenuRow == MENU_FADER_THRESHOLD) {
         settings.faderThreshold = safe_midi_value(settings.faderThreshold + 1);
       }
-      if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
+      if (selectedMenuRow == MENU_AUTO_LOAD_SETTINGS) {
         settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
       }
-      if (menuSelectedRow == MENU_SCROLL_FAST_SPEED) {
+      if (selectedMenuRow == MENU_SCROLL_FAST_SPEED) {
         settings.scrollFastSpeed = safe_midi_value(settings.scrollFastSpeed + 1);
       }
 
@@ -222,16 +221,16 @@ void loop_menu() {
       uint8_t count = MENU_CC;
       for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
         for (uint8_t j = 0; j < NUMBER_OF_ALL_TRACKS; j++) {
-          if (menuSelectedRow == count) {
+          if (selectedMenuRow == count) {
             increase_cc_value(i, j);
           }
           count++;
         }
       }
     } else {
-      menuSelectedRow++;
-      if (menuSelectedRow >= MAX_MENU_ROWS) {
-        menuSelectedRow = 0;
+      selectedMenuRow++;
+      if (selectedMenuRow >= MAX_MENU_ROWS) {
+        selectedMenuRow = 0;
       }
     }
   }
@@ -239,45 +238,45 @@ void loop_menu() {
   if (is_encoder_turned_left()) {
     wasAction = true;
     if (isSubMenuActive) {
-      if (menuSelectedRow == MENU_MIDI_CHANNEL) {
+      if (selectedMenuRow == MENU_MIDI_CHANNEL) {
         settings.midiChannel = safe_midi_value(settings.midiChannel - 1);
       }
-      if (menuSelectedRow == MENU_FADER_THRESHOLD) {
+      if (selectedMenuRow == MENU_FADER_THRESHOLD) {
         settings.faderThreshold = safe_midi_value(settings.faderThreshold - 1);
       }
-      if (menuSelectedRow == MENU_AUTO_LOAD_SETTINGS) {
+      if (selectedMenuRow == MENU_AUTO_LOAD_SETTINGS) {
         settings.autoLoadSettings = settings.autoLoadSettings ? false : true;
       }
-      if (menuSelectedRow == MENU_SCROLL_FAST_SPEED) {
+      if (selectedMenuRow == MENU_SCROLL_FAST_SPEED) {
         settings.scrollFastSpeed = safe_midi_value(settings.scrollFastSpeed - 1);
       }
 
       uint8_t count = MENU_CC;
       for (uint8_t i = 0; i < NUMBER_OF_PAGES; i++) {
         for (uint8_t j = 0; j < NUMBER_OF_ALL_TRACKS; j++) {
-          if (menuSelectedRow == count) {
+          if (selectedMenuRow == count) {
             decrease_cc_value(i, j);
           }
           count++;
         }
       }
     } else {
-      menuSelectedRow--;
-      if (menuSelectedRow < 0) {
-        menuSelectedRow = MAX_MENU_ROWS - 1;
+      selectedMenuRow--;
+      if (selectedMenuRow < 0) {
+        selectedMenuRow = MAX_MENU_ROWS - 1;
       }
     }
   }
 
   if (is_encoder_clicked() || is_right_button_pressed()) {
     wasAction = true;
-    if (menuSelectedRow == MENU_LOAD) {
+    if (selectedMenuRow == MENU_LOAD) {
       render_loading();
       load_settings(settings);
-    } else if (menuSelectedRow == MENU_SAVE) {
+    } else if (selectedMenuRow == MENU_SAVE) {
       render_saving();
       save_settings(settings);
-    } else if (menuSelectedRow == MENU_RESET) {
+    } else if (selectedMenuRow == MENU_RESET) {
       render_resetting();
       reset_settings_to_default();
     } else if (isSubMenuActive) {
@@ -297,58 +296,47 @@ void loop_menu() {
       delay(CLICK_TIMEOUT);
     } else {
       isMenuActive = false;
-      menuSelectedRow = 0;
+      selectedMenuRow = 0;
       shouldScreenUpdate = true;
     }
     return;
   }
 
 
-  if (is_button_pressed(pIndex) || is_button_pressed(tIndex)) {
+  if (is_button_pressed(pressedPageButtonIndex) || is_button_pressed(pressedTrackButtonIndex)) {
     shouldScreenUpdate = true;
     isSubMenuActive = false;
     isMenuActive = false;
-    menuSelectedRow = 0;
+    selectedMenuRow = 0;
     return;
   }
 }
 
 void loop_main() {
-  int8_t pIndex = get_pressed_page_button();
-  int8_t tIndex = get_pressed_track_button();
-
   if (is_left_button_pressed() && is_right_button_pressed()) {
-    if (is_button_pressed(tIndex)) {
-      handle_midi_values_swap(tIndex);
+    if (is_button_pressed(pressedTrackButtonIndex)) {
+      handle_midi_values_swap(pressedTrackButtonIndex);
     }
   } else if (is_left_button_pressed()) {
-    if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
-      wasAction = true;
-      handle_variant_change(pIndex, tIndex, SIDE_LEFT);
-    } else if (is_button_pressed(pIndex)) {
-      wasAction = true;
-      handle_variant_change(pIndex, -1, SIDE_LEFT);
-    } else if (is_button_pressed(tIndex)) {
-      wasAction = true;
-      handle_midi_value_change(tIndex, SIDE_LEFT);
+    if (is_button_pressed(pressedTrackButtonIndex) && is_button_pressed(pressedPageButtonIndex)) {
+      handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_LEFT);
+    } else if (is_button_pressed(pressedPageButtonIndex)) {
+      handle_variant_change(pressedPageButtonIndex, -1, SIDE_LEFT);
+    } else if (is_button_pressed(pressedTrackButtonIndex)) {
+      handle_midi_value_change(pressedTrackButtonIndex, SIDE_LEFT);
     }
   } else if (is_right_button_pressed()) {
-    if (is_button_pressed(tIndex) && is_button_pressed(pIndex)) {
-      wasAction = true;
-      handle_variant_change(pIndex, tIndex, SIDE_RIGHT);
-    } else if (is_button_pressed(pIndex)) {
-      wasAction = true;
-      handle_variant_change(pIndex, -1, SIDE_RIGHT);
-    } else if (is_button_pressed(tIndex)) {
-      wasAction = true;
-      handle_midi_value_change(tIndex, SIDE_RIGHT);
+    if (is_button_pressed(pressedTrackButtonIndex) && is_button_pressed(pressedPageButtonIndex)) {
+      handle_variant_change(pressedPageButtonIndex, pressedTrackButtonIndex, SIDE_RIGHT);
+    } else if (is_button_pressed(pressedPageButtonIndex)) {
+      handle_variant_change(pressedPageButtonIndex, -1, SIDE_RIGHT);
+    } else if (is_button_pressed(pressedTrackButtonIndex)) {
+      handle_midi_value_change(pressedTrackButtonIndex, SIDE_RIGHT);
     }
-  } else if (is_button_pressed(tIndex)) {
-    wasAction = true;
-    handle_track_press(tIndex);
-  } else if (is_button_pressed(pIndex)) {
-    wasAction = true;
-    handle_page_press(pIndex);
+  } else if (is_button_pressed(pressedTrackButtonIndex)) {
+    handle_track_press(pressedTrackButtonIndex);
+  } else if (is_button_pressed(pressedPageButtonIndex)) {
+    handle_page_press(pressedPageButtonIndex);
   } else {
     if (is_encoder_turned_left()) {
       wasAction = true;
@@ -368,7 +356,7 @@ void loop_main() {
     }
   }
 
-  faderValue = analogRead(FADER_PIN);
+  int16_t faderValue = analogRead(FADER_PIN);
 
   if (faderValue > 1023 - settings.faderThreshold) {
     faderValue = 1023 - settings.faderThreshold;
@@ -376,16 +364,20 @@ void loop_main() {
     faderValue = 0 + settings.faderThreshold;
   }
 
+  uint8_t previousMidiValues[NUMBER_OF_PAGES][NUMBER_OF_ALL_TRACKS];
+
   for (int8_t trackIndex = 0; trackIndex < NUMBER_OF_ALL_TRACKS; trackIndex++) {
-    if (settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]] < settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]]) {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 1023 - settings.faderThreshold, 0 + settings.faderThreshold, settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]], settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]]);
+    previousMidiValues[currentPage][trackIndex] = midiValues[currentPage][trackIndex];
+
+    if (settings.midiValues[SIDE_RIGHT][currentPage][trackIndex][settings.variantIndexes[SIDE_RIGHT][currentPage][trackIndex]] < settings.midiValues[SIDE_LEFT][currentPage][trackIndex][settings.variantIndexes[SIDE_LEFT][currentPage][trackIndex]]) {
+      midiValues[currentPage][trackIndex] = map(faderValue, 1023 - settings.faderThreshold, 0 + settings.faderThreshold, settings.midiValues[SIDE_RIGHT][currentPage][trackIndex][settings.variantIndexes[SIDE_RIGHT][currentPage][trackIndex]], settings.midiValues[SIDE_LEFT][currentPage][trackIndex][settings.variantIndexes[SIDE_LEFT][currentPage][trackIndex]]);
     } else {
-      midiValues[pageIndex][trackIndex] = map(faderValue, 0 + settings.faderThreshold, 1023 - settings.faderThreshold, settings.midiValues[SIDE_LEFT][pageIndex][trackIndex][settings.variantIndexes[SIDE_LEFT][pageIndex][trackIndex]], settings.midiValues[SIDE_RIGHT][pageIndex][trackIndex][settings.variantIndexes[SIDE_RIGHT][pageIndex][trackIndex]]);
+      midiValues[currentPage][trackIndex] = map(faderValue, 0 + settings.faderThreshold, 1023 - settings.faderThreshold, settings.midiValues[SIDE_LEFT][currentPage][trackIndex][settings.variantIndexes[SIDE_LEFT][currentPage][trackIndex]], settings.midiValues[SIDE_RIGHT][currentPage][trackIndex][settings.variantIndexes[SIDE_RIGHT][currentPage][trackIndex]]);
     }
 
-    if (previousMidiValues[pageIndex][trackIndex] != midiValues[pageIndex][trackIndex]) {
-      control_change(settings.midiChannel, settings.ccValues[pageIndex][trackIndex], midiValues[pageIndex][trackIndex]);
-      previousMidiValues[pageIndex][trackIndex] = midiValues[pageIndex][trackIndex];
+    if (previousMidiValues[currentPage][trackIndex] != midiValues[currentPage][trackIndex]) {
+      control_change(settings.midiChannel, settings.ccValues[currentPage][trackIndex], midiValues[currentPage][trackIndex]);
+      previousMidiValues[currentPage][trackIndex] = midiValues[currentPage][trackIndex];
       send_midi();
     }
   }
@@ -401,9 +393,18 @@ void loop() {
     perfomanceTimer = micros();
   #endif
 
+  int8_t previousPressedTrackButtonIndex = pressedTrackButtonIndex;
+  int8_t previousPressedPageButtonIndex = pressedPageButtonIndex;
+  side_t previousPressedSideButtonIndex = pressedSideButtonIndex;
+
   reset_state_to_default();
   encoder_tick();
-  wasAction = false;
+
+  pressedTrackButtonIndex = get_pressed_track_button();
+  pressedPageButtonIndex = get_pressed_page_button();
+  pressedSideButtonIndex = is_left_button_pressed() ? SIDE_LEFT : is_right_button_pressed() ? SIDE_RIGHT : SIDE_NONE;
+
+  wasAction = previousPressedTrackButtonIndex != pressedTrackButtonIndex || previousPressedPageButtonIndex != pressedPageButtonIndex || previousPressedSideButtonIndex != pressedSideButtonIndex;
 
   if (isMenuActive) {
     loop_menu();

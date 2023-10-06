@@ -15,6 +15,7 @@ void reset_display() {
   display.home();
   display.setScale(1);
   display.invertText(false);
+  display.autoPrintln(false);
 }
 
 void render_filled_number(uint8_t num) {
@@ -75,23 +76,23 @@ void render_main(
     if (stateEvent.pageChanged) {
       display.invertText(true);
     }
-    display.print(pageIndex + 1);
+    display.print(currentPage + 1);
     display.invertText(false);
     display.print(F(": "));
     if ((stateEvent.trackIndex == indexWithOffset || stateEvent.trackIndex < 0) && stateEvent.variantChanged && stateEvent.side == SIDE_LEFT) {
       display.invertText(true);
     }
-    display.print(settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset] + 1);
+    display.print(settings.variantIndexes[SIDE_LEFT][currentPage][indexWithOffset] + 1);
     display.invertText(false);
     display.print(F("| "));
     if (stateEvent.trackIndex == indexWithOffset && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_LEFT) || stateEvent.midiValuesSwap)) {
       display.invertText(true);
     }
-    render_filled_number(settings.midiValues[SIDE_LEFT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_LEFT][pageIndex][indexWithOffset]]);
+    render_filled_number(settings.midiValues[SIDE_LEFT][currentPage][indexWithOffset][settings.variantIndexes[SIDE_LEFT][currentPage][indexWithOffset]]);
     display.invertText(false);
     display.print(F("<"));
     if (stateEvent.trackIndex == indexWithOffset) {
-      render_filled_number(midiValues[pageIndex][indexWithOffset]);
+      render_filled_number(midiValues[currentPage][indexWithOffset]);
     } else {
       display.print(F("-|-"));
     }
@@ -99,13 +100,13 @@ void render_main(
     if (stateEvent.trackIndex == indexWithOffset && ((stateEvent.midiValuesChanged && stateEvent.side == SIDE_RIGHT) ||stateEvent.midiValuesSwap)) {
       display.invertText(true);
     }
-    render_filled_number(settings.midiValues[SIDE_RIGHT][pageIndex][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset]]);
+    render_filled_number(settings.midiValues[SIDE_RIGHT][currentPage][indexWithOffset][settings.variantIndexes[SIDE_RIGHT][currentPage][indexWithOffset]]);
     display.invertText(false);
     display.print(F(" |"));
     if ((stateEvent.trackIndex == indexWithOffset || stateEvent.trackIndex < 0) && stateEvent.variantChanged && stateEvent.side == SIDE_RIGHT) {
       display.invertText(true);
     }
-    display.print(settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset] + 1);
+    display.print(settings.variantIndexes[SIDE_RIGHT][currentPage][indexWithOffset] + 1);
     display.invertText(false);
     display.println(F(" "));
     if (i < NUMBER_OF_TRACKS_ON_SCREEN - 1) {
@@ -177,19 +178,19 @@ void render_row_auto_load_settings(bool hasActiveSubMenu) {
   }
 }
 
-void render_row_track_cc(uint8_t pageIndex, uint8_t trackIndex, bool hasActiveSubMenu) {
+void render_row_track_cc(uint8_t currentPage, uint8_t trackIndex, bool hasActiveSubMenu) {
   display.print(F("Control Change "));
   display.print((char)pgm_read_byte(&trackTitles[trackIndex]));
-  display.print(pageIndex + 1);
+  display.print(currentPage + 1);
   display.print(F(": "));
   if (hasActiveSubMenu) {
     display.invertText(true);
   }
-  display.print(settings.ccValues[pageIndex][trackIndex]);
+  display.print(settings.ccValues[currentPage][trackIndex]);
 }
 
 void render_row(int8_t rowIndex) {
-  bool isSelected = rowIndex == menuSelectedRow;
+  bool isSelected = rowIndex == selectedMenuRow;
   bool hasActiveSubMenu = isSelected && isSubMenuActive;
   if (isSelected && !hasActiveSubMenu) {
     display.invertText(true);
@@ -222,10 +223,10 @@ void render_menu() {
   reset_display();
   display.println(F("======== Menu ========"));
   for (byte i = 0; i < SCREEN_MENU_ROWS; i++) {
-    if (menuSelectedRow < SCREEN_MENU_ROWS) {
+    if (selectedMenuRow < SCREEN_MENU_ROWS) {
       render_row(i);
     } else {
-      render_row(menuSelectedRow - SCREEN_MENU_ROWS + 1 + i);
+      render_row(selectedMenuRow - SCREEN_MENU_ROWS + 1 + i);
     }
     display.println(F("                    "));
   }

@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION 1.17
+#define VERSION 1.18
 
 #define CLK_PIN 1
 #define DT_PIN 0
@@ -25,16 +25,14 @@
 
 // #define PERFORMANCE_CHECK
 
-extern uint8_t TRACK_PINS[NUMBER_OF_TRACKS_ON_SCREEN];
-extern uint8_t PAGE_PINS[NUMBER_OF_PAGES];
+extern uint8_t const TRACK_PINS[NUMBER_OF_TRACKS_ON_SCREEN];
+extern uint8_t const PAGE_PINS[NUMBER_OF_PAGES];
 
 extern bool isMenuActive;
 extern bool isSubMenuActive;
 
-extern uint8_t pageIndex;
-extern int16_t potValue;
-extern int16_t faderValue;
-extern int8_t menuSelectedRow;
+extern uint8_t currentPage;
+extern int8_t selectedMenuRow;
 extern int8_t trackOffset;
 
 enum menu_t : uint8_t {
@@ -49,8 +47,9 @@ enum menu_t : uint8_t {
 };
 
 enum side_t : int8_t {
+  SIDE_NONE = -1,
   SIDE_LEFT = 0,
-  SIDE_RIGHT,
+  SIDE_RIGHT = 1,
 };
 
 struct Settings {
@@ -75,7 +74,5 @@ struct StateEvent {
 };
 
 extern uint8_t midiValues[NUMBER_OF_PAGES][NUMBER_OF_ALL_TRACKS];
-
-extern uint8_t previousMidiValues[NUMBER_OF_PAGES][NUMBER_OF_ALL_TRACKS];
 
 #endif
