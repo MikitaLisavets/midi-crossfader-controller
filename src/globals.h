@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define VERSION 1.16
+#define VERSION 1.17
 
 #define CLK_PIN 1
 #define DT_PIN 0
@@ -21,7 +21,9 @@
 
 #define MAX_MENU_ROWS 7 + NUMBER_OF_ALL_TRACKS * NUMBER_OF_PAGES
 
-#define CLICK_TIMEOUT 300
+#define CLICK_TIMEOUT 200
+
+// #define PERFORMANCE_CHECK
 
 extern uint8_t TRACK_PINS[NUMBER_OF_TRACKS_ON_SCREEN];
 extern uint8_t PAGE_PINS[NUMBER_OF_PAGES];

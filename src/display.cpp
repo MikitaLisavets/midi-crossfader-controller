@@ -2,7 +2,7 @@
 #include <GyverOLED.h> // Source: https://github.com/GyverLibs/GyverOLED
 #include <display.h>
 
-GyverOLED<SSD1306_128x64, OLED_NO_BUFFER> display;
+GyverOLED<SSD1306_128x64, OLED_BUFFER> display;
 #define SCREEN_MENU_ROWS 7
 
 const char PROGMEM trackTitles[NUMBER_OF_ALL_TRACKS] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P' };
@@ -38,18 +38,25 @@ void render_init_screen() {
   display.setScale(2);
   display.setCursor(25, 1);
   display.print(F("X"));
-  delay(100);
+  display.update();
+
   display.print(F("-"));
-  delay(100);
+  display.update();
+
   display.print(F("F"));
-  delay(100);
+  display.update();
+
   display.print(F("a"));
-  delay(100);
+  display.update();
+
   display.print(F("d"));
-  delay(100);
+  display.update();
+
   display.print(F("e"));
-  delay(100);
+  display.update();
+
   display.print(F("r"));
+  display.update();
   delay(300);
 }
 
@@ -100,22 +107,23 @@ void render_main(
     }
     display.print(settings.variantIndexes[SIDE_RIGHT][pageIndex][indexWithOffset] + 1);
     display.invertText(false);
-    display.println(" ");
+    display.println(F(" "));
     if (i < NUMBER_OF_TRACKS_ON_SCREEN - 1) {
       display.println(F("----------------------"));
-    } else {
-      display.print(F("_________"));
-      for (int8_t j = 0; j < NUMBER_OF_ALL_TRACKS / NUMBER_OF_TRACKS_ON_SCREEN; j++) {
-        if (j ==  trackOffset / NUMBER_OF_TRACKS_ON_SCREEN) {
-          display.print(F("*"));
-        } else {
-          display.print(F("."));
-        }
-      }
-      display.println(F("_________"));
     }
   }
 
+  display.print(F("_________"));
+  for (int8_t j = 0; j < NUMBER_OF_ALL_TRACKS / NUMBER_OF_TRACKS_ON_SCREEN; j++) {
+    if (j ==  trackOffset / NUMBER_OF_TRACKS_ON_SCREEN) {
+      display.print(F("*"));
+    } else {
+      display.print(F("."));
+    }
+  }
+  display.println(F("_________"));
+
+  display.update();
 }
 
 // === Menu ===
@@ -221,6 +229,7 @@ void render_menu() {
     }
     display.println(F("                    "));
   }
+  display.update();
 }
 
 void render_loading() {
@@ -229,6 +238,7 @@ void render_loading() {
   display.setScale(2);
   display.setCursor(0, 3);
   display.println(F("Loading..."));
+  display.update();
 }
 
 void render_saving() {
@@ -237,6 +247,7 @@ void render_saving() {
   display.setScale(2);
   display.setCursor(0, 3);
   display.println(F("Saving..."));
+  display.update();
 }
 
 void render_resetting() {
@@ -245,6 +256,7 @@ void render_resetting() {
   display.setScale(2);
   display.setCursor(0, 3);
   display.println(F("Reset..."));
+  display.update();
 }
 
 void init_display() {

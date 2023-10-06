@@ -12,6 +12,7 @@ bool isMenuActive = false;
 bool isSubMenuActive = false;
 
 bool shouldScreenUpdate = false;
+bool wasAction = false;
 
 uint8_t pageIndex = 0;
 int16_t potValue;
@@ -191,11 +192,13 @@ void setup() {
   reset_state_to_default();
 
   render_main(stateEvent);
+
+  #ifndef PERFOMANCE_CHECK
+    Serial.begin(9600);
+  #endif
 }
 
 void loop_menu() {
-  bool wasAction = false;
-
   int8_t pIndex = get_pressed_page_button();
   int8_t tIndex = get_pressed_track_button();
 
@@ -308,23 +311,9 @@ void loop_menu() {
     menuSelectedRow = 0;
     return;
   }
-
-  if (shouldScreenUpdate) {
-    render_menu();
-  }
-
-  shouldScreenUpdate = wasAction;
 }
 
 void loop_main() {
-  if (is_encoder_clicked()) {
-    isMenuActive = true;
-    shouldScreenUpdate = true;
-    return;
-  }
-
-  bool wasAction = false;
-
   int8_t pIndex = get_pressed_page_button();
   int8_t tIndex = get_pressed_track_button();
 
@@ -400,22 +389,45 @@ void loop_main() {
       send_midi();
     }
   }
-
-  if (shouldScreenUpdate) {
-    render_main(stateEvent);
-  }
-
-  shouldScreenUpdate = wasAction;
 }
 
+
+#ifndef PERFOMANCE_CHECK
+  long perfomanceTimer;
+#endif
+
 void loop() {
+  #ifndef PERFOMANCE_CHECK
+    perfomanceTimer = micros();
+  #endif
+
   reset_state_to_default();
   encoder_tick();
+  wasAction = false;
 
   if (isMenuActive) {
     loop_menu();
   } else {
-    loop_main();
+    if (is_encoder_clicked()) {
+      isMenuActive = true;
+      shouldScreenUpdate = true;
+    } else {
+      loop_main();
+    }
   }
+
+  if (shouldScreenUpdate) {
+    if (isMenuActive) {
+      render_menu();
+    } else {
+      render_main(stateEvent);
+    }
+  }
+
+  shouldScreenUpdate = wasAction;
+
+  #ifndef PERFOMANCE_CHECK
+    Serial.println(micros() - perfomanceTimer);
+  #endif
 }
 
