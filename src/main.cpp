@@ -39,7 +39,7 @@ void reset_settings_to_default() {
   settings = {
     .midiChannel = 0,
     .faderThreshold = 10,
-    .scrollFastSpeed = 10,
+    .scrollFastSpeed = 5,
     .variantIndexes = {{{0}}, {{0}}},
     .midiValues = {{{{0}}}, {{{0}}}},
     .ccValues = {{0}},
