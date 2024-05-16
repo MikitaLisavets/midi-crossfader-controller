@@ -1,7 +1,9 @@
 # X-Fader MIDI Controller
 Arduino MIDIUSB controller with single slide potentiometer, keyboard buttons, rotary knob and OLED Screen
 
-Video review and demo: https://www.youtube.com/watch?v=cPPIEnUjKAs
+Video review and demo:
+
+[![](https://img.youtube.com/vi/cPPIEnUjKAs/0.jpg)](https://www.youtube.com/watch?v=cPPIEnUjKAs)
 
 ### GUI main screen
 <img width="500" alt="gui" src="https://github.com/MikitaLisavets/midi-crossfader-controller/assets/1909810/c7f8911e-d3f8-4e45-b6d2-6913d26e1756">
